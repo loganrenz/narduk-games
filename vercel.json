@@ -76,7 +76,7 @@
       ]
     },
     {
-      "source": "/wordle/(.*)",
+      "source": "/(.*)",
       "destination": "/games/wordle-clone/dist/wordle/$1",
       "has": [
         {
