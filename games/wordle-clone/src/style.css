@@ -23,17 +23,27 @@
   user-select: none;
 }
 
+html {
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
 body {
   margin: 0;
-  min-height: 100vh;
+  height: 100%;
+  width: 100%;
   font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
   color: var(--text-color);
   background: var(--bg-color);
-  overflow-x: hidden;
+  overflow: hidden;
+  position: fixed;
   display: flex;
   justify-content: center;
   -webkit-tap-highlight-color: transparent;
-  touch-action: pan-y;
+  touch-action: none;
+  overscroll-behavior: none;
 }
 
 #app {
@@ -41,8 +51,12 @@ body {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 header {
@@ -51,6 +65,8 @@ header {
   justify-content: space-between;
   padding: 8px 0;
   border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  min-height: 0;
 }
 
 .brand {
@@ -113,11 +129,14 @@ button:active {
   gap: 6px;
   align-items: center;
   padding: 20px 0;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .row {
   display: flex;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .tile-container {
@@ -205,12 +224,17 @@ button:active {
   padding: 16px;
   background: transparent;
   padding-bottom: max(16px, env(safe-area-inset-bottom));
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
 .keyboard-row {
   display: flex;
   gap: 6px;
   justify-content: center;
+  flex-shrink: 0;
+  width: 100%;
+  overflow: hidden;
 }
 
 .key {
@@ -318,6 +342,9 @@ button:active {
   padding: 16px;
   z-index: 80;
   backdrop-filter: blur(2px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .modal {
@@ -529,8 +556,9 @@ button:active {
   }
 
   .game-board {
-    padding: 12px 0;
+    padding: 8px 0;
     gap: 4px;
+    flex-shrink: 0;
   }
 
   .row {
@@ -554,6 +582,7 @@ button:active {
   .keyboard {
     padding: 8px 4px;
     gap: 6px;
+    flex-shrink: 0;
   }
 
   .keyboard-row {
@@ -669,6 +698,7 @@ button:active {
   .keyboard {
     padding: 6px 2px;
     gap: 4px;
+    flex-shrink: 0;
   }
 
   .key {
@@ -728,23 +758,46 @@ button:active {
 @media (max-width: 768px) and (orientation: landscape) {
   #app {
     padding: 4px;
-    gap: 6px;
+    gap: 4px;
+  }
+
+  header {
+    padding: 2px 0;
   }
 
   .game-board {
-    padding: 8px 0;
+    padding: 4px 0;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+
+  .row {
+    gap: 3px;
   }
 
   .tile-container {
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .tile {
+    font-size: 1.2rem;
   }
 
   .keyboard {
     padding: 4px 2px;
+    gap: 3px;
+    flex-shrink: 0;
   }
 
   .key {
-    height: 44px;
+    height: 40px;
+    font-size: 0.65rem;
+  }
+
+  .key.wide {
+    font-size: 0.6rem;
   }
 }
