@@ -1,27 +1,19 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "name": "narduk-games",
-  "builds": [
+  "name": "narduk-games-hub",
+  "buildCommand": "echo 'Landing page ready'",
+  "outputDirectory": ".",
+  "installCommand": "echo 'No dependencies needed for landing page'",
+  "headers": [
     {
-      "src": "games/lexi-stack/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "games/lexi-stack/dist"
-      }
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        }
+      ]
     }
-  ],
-  "routes": [
-    {
-      "src": "/lexi-stack/(.*)",
-      "dest": "/games/lexi-stack/dist/$1"
-    },
-    {
-      "src": "/",
-      "dest": "/index.html"
-    }
-  ],
-  "github": {
-    "silent": true
-  }
+  ]
 }

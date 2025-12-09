@@ -76,22 +76,37 @@ This monorepo is designed to work with:
 - **Vercel**: For hosting the frontend games
 - **Cloudflare**: For DNS and D1 database services
 
-### Deploying to Vercel
+### Deployment Strategy
 
-Each game can be deployed individually. Vercel will automatically detect the project structure through the `vercel.json` configuration in each game directory.
+Each component is deployed separately:
+- **Landing Page** (`narduk.games`): Deployed from root directory
+- **Lexi-Stack** (`lexi-stack.narduk.games`): Deployed from `games/lexi-stack`
+- **Wordle Clone** (coming soon): Deployed from `games/wordle-clone`
 
-For Lexi-Stack:
+### Quick Deploy
+
+Deploy a specific game:
 ```bash
 cd games/lexi-stack
 vercel --prod
 ```
 
-### Cloudflare D1 Database
-
-For games that use Cloudflare D1 (like Lexi-Stack), run migrations:
+Deploy the landing page:
 ```bash
-npm run lexi-stack:deploy
+# From root directory
+vercel --prod
 ```
+
+### Cloudflare Workers & D1
+
+For games using Cloudflare Workers and D1:
+```bash
+cd games/lexi-stack
+npm run deploy:worker  # Deploy worker
+npm run db:migrate      # Apply database migrations
+```
+
+For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 ## ➕ Adding a New Game
 
