@@ -1,0 +1,15 @@
+name = "lexi-stack-api"
+main = "src/worker.js"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "lexistack"
+database_id = "ca89b569-ca31-4c0b-8db1-c62540d9e65a"
+
+[env.production]
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "lexistack"
+database_id = "ca89b569-ca31-4c0b-8db1-c62540d9e65a"
+

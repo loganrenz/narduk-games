@@ -1,0 +1,18 @@
+{
+  "name": "wordle-clone",
+  "version": "0.1.0",
+  "description": "A Wordle-inspired word guessing game",
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'Wordle clone coming soon! Run: npm create vite@latest . -- --template vue to initialize'",
+    "build": "echo 'Wordle clone coming soon!'",
+    "test": "echo 'Wordle clone coming soon!'"
+  },
+  "keywords": [
+    "wordle",
+    "game",
+    "word-game"
+  ],
+  "author": "loganrenz",
+  "license": "MIT"
+}

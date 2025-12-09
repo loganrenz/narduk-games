@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lexi-stack.vercel.app/sitemap.xml
+

@@ -1,0 +1,33 @@
+{
+  "name": "narduk-games",
+  "version": "1.0.0",
+  "description": "A monorepo for all Narduk games",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lexi-stack:dev": "cd games/lexi-stack && npm run dev",
+    "lexi-stack:build": "cd games/lexi-stack && npm run build",
+    "lexi-stack:test": "cd games/lexi-stack && npm run test",
+    "lexi-stack:deploy": "cd games/lexi-stack && npm run deploy:worker",
+    "wordle-clone:dev": "cd games/wordle-clone && npm run dev",
+    "wordle-clone:build": "cd games/wordle-clone && npm run build",
+    "wordle-clone:test": "cd games/wordle-clone && npm run test",
+    "install:all": "npm run install:lexi-stack && npm run install:wordle-clone",
+    "install:lexi-stack": "cd games/lexi-stack && npm install",
+    "install:wordle-clone": "cd games/wordle-clone && npm install",
+    "build:all": "npm run lexi-stack:build && npm run wordle-clone:build",
+    "test:all": "npm run lexi-stack:test && npm run wordle-clone:test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loganrenz/narduk-games.git"
+  },
+  "author": "loganrenz",
+  "license": "MIT",
+  "keywords": [
+    "games",
+    "monorepo",
+    "lexi-stack",
+    "wordle"
+  ]
+}
