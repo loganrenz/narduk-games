@@ -1,17 +1,129 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "name": "narduk-games-hub",
-  "buildCommand": "echo 'Landing page ready'",
+  "buildCommand": "npm run install:all && npm run build:all",
+  "installCommand": "echo 'Dependencies installed in build'",
   "outputDirectory": ".",
-  "installCommand": "echo 'No dependencies needed for landing page'",
-  "headers": [
+  "rewrites": [
+    {
+      "source": "/lexistack/(.*)",
+      "destination": "/games/lexi-stack/dist/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/lexistack",
+      "destination": "/games/lexi-stack/dist/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/wordle/(.*)",
+      "destination": "/games/wordle-clone/dist/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/wordle",
+      "destination": "/games/wordle-clone/dist/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    },
     {
       "source": "/(.*)",
+      "destination": "/games/lexi-stack/dist/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "lexistack.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/",
+      "destination": "/games/lexi-stack/dist/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "lexistack.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/games/wordle-clone/dist/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "wordle.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/",
+      "destination": "/games/wordle-clone/dist/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "wordle.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    }
+  ],
+  "headers": [
+    {
+      "source": "/games/lexi-stack/dist/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=3600, must-revalidate"
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "has": [
+        {
+          "type": "host",
+          "value": "lexistack.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/games/wordle-clone/dist/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ],
+      "has": [
+        {
+          "type": "host",
+          "value": "wordle.nard.uk"
         }
       ]
     }

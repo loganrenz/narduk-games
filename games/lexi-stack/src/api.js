@@ -1,20 +1,13 @@
-// API client for Cloudflare D1 database
+// API client for Lexi-Stack game data
+// User authentication is handled by the shared auth client
+
+import { getOrCreateUser as authGetOrCreateUser } from '../../../shared/auth/client.js';
+
 const API_BASE_URL = 'https://lexi-stack-api.narduk.workers.dev';
 
-// Get or create user
+// Get or create user (uses unified auth API)
 export async function getOrCreateUser(username, userId = null) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/user`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, userId }),
-    });
-    const data = await response.json();
-    return data.user;
-  } catch (error) {
-    console.error('Error creating user:', error);
-    return null;
-  }
+  return await authGetOrCreateUser(username, userId);
 }
 
 // Submit score

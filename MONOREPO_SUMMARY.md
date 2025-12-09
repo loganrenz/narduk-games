@@ -25,6 +25,11 @@ narduk-games/
 │   │   └── storage.js       # localStorage helpers
 │   ├── constants/
 │   │   └── colors.js        # Shared color palette
+│   ├── auth/                # Unified authentication system
+│   │   ├── worker.js         # Auth API worker
+│   │   ├── client.js         # Shared auth client library
+│   │   ├── wrangler.toml     # Auth worker config
+│   │   └── migrations/       # Auth database migrations
 │   └── README.md
 ├── index.html               # Landing page with game cards
 ├── package.json             # Root scripts for all games
@@ -83,6 +88,16 @@ Benefits:
 - Cloudflare D1 for database
 - Wrangler configuration included
 - Migration scripts ready
+
+### 7. Unified Authentication System
+- **Central Auth Database**: `narduk-games-auth` - Single source of truth for all users
+- **Auth API Worker**: `narduk-games-auth-api` - Handles user creation, login, profile management
+- **Game-Specific Databases**: Each game has its own data database (scores, stats, etc.)
+- **Shared Auth Client**: `shared/auth/client.js` - Reusable auth functions for all games
+- **Benefits**: 
+  - Users have one account across all games
+  - Game data is isolated and scalable
+  - Industry-standard multi-game platform architecture
 
 ## Documentation
 

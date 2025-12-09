@@ -1,0 +1,15 @@
+name = "narduk-games-auth-api"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "AUTH_DB"
+database_name = "narduk-games-auth"
+database_id = "c6d83c18-c6c8-41da-ae5e-dfa13bdb54c9"
+
+[env.production]
+[[env.production.d1_databases]]
+binding = "AUTH_DB"
+database_name = "narduk-games-auth"
+database_id = "c6d83c18-c6c8-41da-ae5e-dfa13bdb54c9"
+

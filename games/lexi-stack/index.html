@@ -977,12 +977,53 @@
     // API functions
     const API_BASE_URL = 'https://lexi-stack-api.narduk.workers.dev';
     
-    // User management with localStorage
-    function saveUserToStorage(user) {
+    // User management with cross-subdomain cookies
+    // Import cookie utilities (inline for HTML file)
+    function setAuthCookie(user) {
+      const COOKIE_DOMAIN = '.nard.uk';
+      const AUTH_COOKIE_NAME = 'narduk_auth';
+      const AUTH_COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1 year
+      
+      const cookieValue = JSON.stringify({
+        id: user.id,
+        username: user.username,
+        displayname: user.displayname || user.username,
+        timestamp: Date.now()
+      });
+      const encoded = btoa(unescape(encodeURIComponent(cookieValue)));
+      document.cookie = `${AUTH_COOKIE_NAME}=${encoded}; domain=${COOKIE_DOMAIN}; path=/; max-age=${AUTH_COOKIE_MAX_AGE}; SameSite=Lax; Secure`;
+      
+      // Also save to localStorage as fallback
       localStorage.setItem('lexistack_user', JSON.stringify(user));
     }
     
+    function getAuthCookie() {
+      const AUTH_COOKIE_NAME = 'narduk_auth';
+      const cookies = document.cookie.split(';');
+      const authCookie = cookies.find(cookie => cookie.trim().startsWith(`${AUTH_COOKIE_NAME}=`));
+      
+      if (!authCookie) {
+        return null;
+      }
+      
+      try {
+        const encoded = authCookie.split('=')[1];
+        const decoded = decodeURIComponent(escape(atob(encoded)));
+        return JSON.parse(decoded);
+      } catch (error) {
+        console.error('Error parsing auth cookie:', error);
+        return null;
+      }
+    }
+    
     function loadUserFromStorage() {
+      // First try cookie (cross-subdomain SSO)
+      const cookieUser = getAuthCookie();
+      if (cookieUser) {
+        return cookieUser;
+      }
+      
+      // Fallback to localStorage
       const stored = localStorage.getItem('lexistack_user');
       if (stored) {
         try {
@@ -997,7 +1038,8 @@
     async function checkUsernameAvailability(username) {
       try {
         // Try the check endpoint first
-        const response = await fetch(`${API_BASE_URL}/api/user/check?username=${encodeURIComponent(username)}`);
+        // Use unified auth API
+        const response = await fetch(`https://narduk-games-auth-api.narduk.workers.dev/api/auth/check-username?username=${encodeURIComponent(username)}`);
         
         // Handle non-200 status codes
         if (!response.ok) {
@@ -1009,7 +1051,8 @@
             // Endpoint doesn't exist, try alternative method
             // Try to query user by username (if API supports it)
             try {
-              const userResponse = await fetch(`${API_BASE_URL}/api/user?username=${encodeURIComponent(username)}`);
+              // Use unified auth API
+              const userResponse = await fetch(`https://narduk-games-auth-api.narduk.workers.dev/api/auth/user?username=${encodeURIComponent(username)}`);
               if (userResponse.ok) {
                 const userData = await userResponse.json();
                 // If user exists, username is taken
@@ -1060,7 +1103,8 @@
           requestBody.password = password;
         }
         
-        const response = await fetch(`${API_BASE_URL}/api/user`, {
+        // Use unified auth API
+        const response = await fetch('https://narduk-games-auth-api.narduk.workers.dev/api/auth/user', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody),
@@ -1098,7 +1142,7 @@
           throw new Error('Failed to create user');
         }
         
-        saveUserToStorage(data.user);
+        setAuthCookie(data.user);
         return data.user;
       } catch (error) {
         console.error('Error creating user:', error);
@@ -1112,7 +1156,7 @@
           username: username,
           local: true
         };
-        saveUserToStorage(localUser);
+        setAuthCookie(localUser);
         return localUser;
       }
     }
@@ -1181,7 +1225,8 @@
     
     async function updateUser(userId, updates) {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/user`, {
+        // Use unified auth API
+        const response = await fetch('https://narduk-games-auth-api.narduk.workers.dev/api/auth/user', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId, ...updates }),
@@ -1192,7 +1237,7 @@
         }
         const data = await response.json();
         if (data.user) {
-          saveUserToStorage(data.user);
+          setAuthCookie(data.user);
         }
         return data.user;
       } catch (error) {
@@ -2600,13 +2645,30 @@
       attachEvents();
       loadDictionary();
       
-      // Check if user exists
+      // Check if user exists (check cookie first for cross-subdomain SSO)
       const storedUser = loadUserFromStorage();
       if (storedUser) {
-        currentUser = storedUser;
+        // Verify user still exists in auth system
+        try {
+          const response = await fetch(`https://narduk-games-auth-api.narduk.workers.dev/api/auth/user?userId=${storedUser.id}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.user) {
+              currentUser = data.user;
+              setAuthCookie(data.user); // Refresh cookie
+            } else {
+              currentUser = storedUser; // Use stored user if API fails
+            }
+          } else {
+            currentUser = storedUser; // Use stored user if API fails
+          }
+        } catch (error) {
+          console.error('Error verifying user:', error);
+          currentUser = storedUser; // Use stored user if API fails
+        }
         updateUserBadge();
-      // User exists, start game directly (tutorial can be accessed via button)
-      clearAndReset();
+        // User exists, start game directly (tutorial can be accessed via button)
+        clearAndReset();
       } else {
         // No user, show registration first
         registerModal.style.display = 'flex';

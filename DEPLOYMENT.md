@@ -119,11 +119,96 @@ npm install
 vercel --prod
 ```
 
+## Unified Authentication System
+
+All Narduk games use a unified authentication system with:
+- **Auth Database**: `narduk-games-auth` - Central user authentication
+- **Auth API Worker**: `narduk-games-auth-api` - Handles all user auth
+- **Game-Specific Databases**: Each game has its own data database
+
+### Setup Unified Auth System
+
+#### 1. Create Auth Database
+
+```bash
+# Create the unified auth database
+wrangler d1 create narduk-games-auth
+
+# Note the database_id from the output and update shared/auth/wrangler.toml
+```
+
+#### 2. Apply Auth Database Migrations
+
+```bash
+cd shared/auth
+
+# Apply migrations to production
+wrangler d1 execute narduk-games-auth --remote --file=./migrations/0001_auth_schema.sql
+
+# Or use migrations (if configured)
+wrangler d1 migrations apply narduk-games-auth --remote
+```
+
+#### 3. Deploy Auth API Worker
+
+```bash
+cd shared/auth
+
+# Deploy auth worker
+wrangler deploy
+
+# The worker will be available at: https://narduk-games-auth-api.narduk.workers.dev
+```
+
+#### 4. Migrate Existing Users (Lexi-Stack)
+
+If you have existing users in the old lexi-stack database:
+
+```bash
+cd shared/auth/migrations
+
+# Run migration script
+node migrate-lexi-stack-users.js
+```
+
+This will migrate all users from `lexistack` to `narduk-games-auth`.
+
+### Setup Game-Specific Databases
+
+Each game now has its own data database separate from auth.
+
+#### Lexi-Stack Data Database
+
+```bash
+# Create lexi-stack data database
+wrangler d1 create lexi-stack-data
+
+# Note the database_id and update games/lexi-stack/wrangler.toml
+
+# Apply migrations
+cd games/lexi-stack
+wrangler d1 execute lexi-stack-data --remote --file=./migrations/0003_game_data_schema.sql
+
+# Migrate existing data (scores, words) from old database
+# (Manual process - export from old DB, import to new DB)
+```
+
+#### Wordle Clone Data Database (Future)
+
+```bash
+# Create wordle data database
+wrangler d1 create wordle-clone-data
+
+# Apply migrations
+cd games/wordle-clone
+wrangler d1 execute wordle-clone-data --remote --file=./migrations/0001_game_data_schema.sql
+```
+
 ## Cloudflare Workers & D1 Setup
 
 Some games (like Lexi-Stack) use Cloudflare Workers for API and D1 for database.
 
-### Deploy Worker
+### Deploy Game Workers
 
 ```bash
 cd games/lexi-stack
@@ -134,15 +219,18 @@ npm run deploy:worker
 wrangler deploy
 ```
 
+**Important**: Make sure `AUTH_API_URL` environment variable is set in wrangler.toml:
+```toml
+vars = { AUTH_API_URL = "https://narduk-games-auth-api.narduk.workers.dev" }
+```
+
 ### Apply Database Migrations
 
 ```bash
 cd games/lexi-stack
 
 # Apply migrations to production
-npm run db:migrate
-# or
-wrangler d1 migrations apply [database-id] --remote
+wrangler d1 execute lexi-stack-data --remote --file=./migrations/0003_game_data_schema.sql
 ```
 
 ### Get Database ID
