@@ -679,6 +679,7 @@ button:active {
 
   .game-board {
     padding: 8px 0;
+    flex-shrink: 0;
   }
 
   .tile-container {
