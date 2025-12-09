@@ -1,0 +1,2623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  
+  <!-- Primary Meta Tags -->
+  <title>LexiStack - Word Building Tower Defense Game</title>
+  <meta name="title" content="LexiStack - Word Building Tower Defense Game" />
+  <meta name="description" content="A word-building tower defense game. Drag across tiles to form words, score points, and keep the tower from reaching the top!" />
+  <meta name="keywords" content="word game, puzzle, tower defense, word building, vocabulary, game" />
+  <meta name="author" content="LexiStack" />
+  
+  <!-- Open Graph / Facebook / LinkedIn -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://lexi-stack.vercel.app/" />
+  <meta property="og:title" content="LexiStack - Word Building Tower Defense Game" />
+  <meta property="og:description" content="A word-building tower defense game. Drag across tiles to form words, score points, and keep the tower from reaching the top!" />
+  <meta property="og:image" content="https://lexi-stack.vercel.app/og-image-facebook.png" />
+  <meta property="og:image:secure_url" content="https://lexi-stack.vercel.app/og-image-facebook.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="627" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:alt" content="LexiStack - Word Building Tower Defense Game" />
+  <meta property="og:site_name" content="LexiStack" />
+  <meta property="og:locale" content="en_US" />
+  
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@LexiStack" />
+  <meta name="twitter:creator" content="@LexiStack" />
+  <meta name="twitter:url" content="https://lexi-stack.vercel.app/" />
+  <meta name="twitter:title" content="LexiStack - Word Building Tower Defense Game" />
+  <meta name="twitter:description" content="A word-building tower defense game. Drag across tiles to form words, score points, and keep the tower from reaching the top!" />
+  <meta name="twitter:image" content="https://lexi-stack.vercel.app/og-image-twitter.png" />
+  <meta name="twitter:image:alt" content="LexiStack - Word Building Tower Defense Game" />
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#22d3ee" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="LexiStack" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  
+  <!-- Additional Icons -->
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/icon-512x512.png" />
+  
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+  <style>
+    :root {
+      --bg-top: #0f172a;
+      --bg-bottom: #0b1224;
+      --panel: rgba(15, 23, 42, 0.9);
+      --tile: #1e293b;
+      --tile-edge: #0ea5e9;
+      --tile-text: #e2e8f0;
+      --cyan: #22d3ee;
+      --emerald: #22c55e;
+      --amber: #f59e0b;
+      --danger: #ef4444;
+      --shadow: rgba(0, 0, 0, 0.35);
+    }
+    * { box-sizing: border-box; }
+    * {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: #e2e8f0;
+      background: radial-gradient(circle at 20% 20%, rgba(34, 211, 238, 0.05), transparent 35%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+    }
+    .app {
+      width: min(100%, 1100px);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: 100vh;
+      min-height: 100vh;
+    }
+    @media (max-width: 768px) {
+      .app {
+        padding: 8px;
+        gap: 8px;
+      }
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 6px 0;
+    }
+    .brand {
+      font-size: 1.4rem;
+      letter-spacing: 0.08em;
+      font-weight: 800;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-transform: uppercase;
+    }
+    .badge {
+      background: linear-gradient(135deg, #0ea5e9, #22c55e);
+      color: #0b1224;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .header-stats {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      flex: 1;
+      justify-content: center;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      min-width: 50px;
+      position: relative;
+    }
+    .stat-label {
+      font-size: 0.65rem;
+      color: #94a3b8;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .stat-value {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #e2e8f0;
+      letter-spacing: 0.02em;
+      transition: transform 0.2s ease;
+    }
+    .stat-value.score-pop {
+      animation: scorePop 0.6s ease;
+    }
+    @keyframes scorePop {
+      0% { transform: scale(1); }
+      30% { transform: scale(1.3); color: #22c55e; }
+      60% { transform: scale(1.1); }
+      100% { transform: scale(1); color: #e2e8f0; }
+    }
+    .points-gain {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: #22c55e;
+      text-shadow: 0 0 10px rgba(34, 197, 94, 0.8);
+      pointer-events: none;
+      z-index: 50;
+      animation: floatUp 1s ease-out forwards;
+      white-space: nowrap;
+    }
+    @keyframes floatUp {
+      0% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-60px) scale(1.2);
+      }
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    button {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      color: #e2e8f0;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 6px 18px var(--shadow);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      touch-action: manipulation;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 10px 22px var(--shadow); }
+    button:active { transform: translateY(0); box-shadow: 0 4px 12px var(--shadow); }
+    .primary { border-color: rgba(34, 211, 238, 0.6); background: linear-gradient(135deg, #0ea5e9, #06b6d4); color: #0b1224; }
+    .danger { border-color: rgba(239, 68, 68, 0.6); background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fef2f2; }
+
+    .board-wrap {
+      position: relative;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 16px;
+      padding: 8px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    
+    .start-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(11, 18, 36, 0.95);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      border-radius: 12px;
+    }
+    
+    .start-button {
+      padding: 20px 60px;
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #22d3ee, #06b6d4);
+      color: #0b1224;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      box-shadow: 0 8px 32px rgba(34, 211, 238, 0.4), 0 0 0 4px rgba(34, 211, 238, 0.2);
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    
+    .start-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 40px rgba(34, 211, 238, 0.5), 0 0 0 6px rgba(34, 211, 238, 0.3);
+    }
+    
+    .start-button:active {
+      transform: scale(0.98);
+    }
+    
+    .countdown-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(11, 18, 36, 0.8);
+      backdrop-filter: blur(4px);
+      z-index: 101;
+      border-radius: 12px;
+    }
+    
+    #countdownCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    @media (max-width: 768px) {
+      .board-wrap {
+        padding: 6px;
+        border-radius: 12px;
+      }
+    }
+
+    .board {
+      position: relative;
+      aspect-ratio: 6 / 10;
+      min-height: 450px;
+      max-height: 75vh;
+      width: 100%;
+      background: radial-gradient(circle at 50% -10%, rgba(34, 211, 238, 0.08), transparent 40%), #0b1224;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+    }
+    @media (max-width: 768px) {
+      .board {
+        min-height: 50vh;
+        max-height: 75vh;
+      }
+      .grid {
+        gap: 5px;
+        inset: 6px;
+      }
+      .cell {
+        min-height: 48px; /* Larger touch target on mobile */
+      }
+      .tile {
+        inset: 2px;
+        border-width: 1.5px;
+      }
+    }
+    .grid {
+      position: absolute;
+      inset: 8px;
+      display: grid;
+      grid-template-columns: repeat(var(--cols, 6), 1fr);
+      grid-template-rows: repeat(var(--rows, 10), 1fr);
+      gap: 6px;
+      touch-action: none;
+    }
+    .cell {
+      position: relative;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      user-select: none;
+      transition: transform 0.15s ease;
+      min-height: 44px; /* Minimum touch target for mobile */
+    }
+    .tile {
+      position: absolute;
+      inset: 3px;
+      background: linear-gradient(160deg, #1e293b, #0f172a);
+      border-radius: 10px;
+      border: 1.5px solid rgba(14, 165, 233, 0.8);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: translateZ(0);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.2s ease;
+      overflow: hidden;
+    }
+    .tile canvas {
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .tile.value-1 { border-color: rgba(226, 232, 240, 0.6); }
+    .tile.value-2 { border-color: rgba(165, 243, 252, 0.7); }
+    .tile.value-3 { border-color: rgba(134, 239, 172, 0.7); }
+    .tile.value-4 { border-color: rgba(147, 197, 253, 0.7); }
+    .tile.value-5 { border-color: rgba(251, 191, 36, 0.8); }
+    .tile.value-8 { border-color: rgba(249, 115, 22, 0.85); }
+    .tile.value-10 { border-color: rgba(251, 146, 60, 0.95); }
+    .tile.high { 
+      box-shadow: 0 8px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), 0 0 12px rgba(251, 146, 60, 0.3);
+    }
+    .tile.selected {
+      transform: translateZ(0) translateY(-2px) scale(1.04);
+      box-shadow: 0 12px 24px rgba(34, 211, 238, 0.3), inset 0 0 0 2px rgba(34, 211, 238, 0.8), 0 0 16px rgba(34, 211, 238, 0.4);
+      border-color: rgba(34, 211, 238, 1);
+    }
+    .tile.invalid { 
+      animation: shake-and-flash 0.3s ease;
+      border-color: rgba(239, 68, 68, 1) !important;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.4), inset 0 0 0 2px rgba(239, 68, 68, 0.8), 0 0 16px rgba(239, 68, 68, 0.6) !important;
+    }
+    @keyframes shake-and-flash { 
+      0%, 100% {
+        transform: translateX(0);
+        background: linear-gradient(160deg,#1e293b,#0f172a);
+      }
+      10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-2px);
+        background: linear-gradient(160deg,#991b1b,#7f1d1d);
+      }
+      20%, 40%, 60%, 80% {
+        transform: translateX(2px);
+        background: linear-gradient(160deg,#991b1b,#7f1d1d);
+      }
+    }
+
+    .path-layer { position: absolute; inset: 8px; pointer-events: none; }
+
+    .floating-word {
+      position: fixed;
+      pointer-events: none;
+      background: rgba(15,23,42,0.9);
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(148,163,184,0.3);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+      transform: translate(-50%, -150%);
+      display: none;
+      gap: 4px;
+      flex-direction: column;
+      min-width: 120px;
+      z-index: 30;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .floating-word.warning {
+      border-color: rgba(239, 68, 68, 0.6);
+      box-shadow: 0 10px 25px rgba(239, 68, 68, 0.2);
+      animation: pulse-warning 1s ease-in-out infinite;
+    }
+    @keyframes pulse-warning {
+      0%, 100% { border-color: rgba(239, 68, 68, 0.6); }
+      50% { border-color: rgba(239, 68, 68, 0.9); }
+    }
+    .floating-word .word { font-weight: 900; letter-spacing: 0.08em; }
+    .floating-word .points { font-size: 0.85rem; color: #a5f3fc; }
+    .floating-word.warning .points { color: #fca5a5; }
+    .floating-word.shake {
+      animation: shake-floating 0.3s ease;
+    }
+    @keyframes shake-floating {
+      0%, 100% { transform: translate(-50%, -150%) translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translate(-50%, -150%) translateX(-3px); }
+      20%, 40%, 60%, 80% { transform: translate(-50%, -150%) translateX(3px); }
+    }
+
+    .combo { color: var(--emerald); }
+    .time-positive { color: var(--cyan); }
+    .time-low { color: var(--danger); }
+    .level { color: #3b82f6; }
+
+    .toast-area {
+      position: fixed;
+      top: 80px;
+      right: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 60;
+      width: min(280px, calc(100% - 24px));
+      max-width: 320px;
+      pointer-events: none;
+    }
+    .toast {
+      padding: 8px 12px;
+      border-radius: 10px;
+      color: #0b1224;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.02em;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.25);
+      animation: slideInRight 0.3s ease;
+      pointer-events: auto;
+    }
+    @keyframes slideInRight {
+      from { 
+        transform: translateX(100%); 
+        opacity: 0; 
+      } 
+      to { 
+        transform: translateX(0); 
+        opacity: 1; 
+      } 
+    }
+    .toast.success { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .toast.error { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fef2f2; }
+    @keyframes rise { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 80;
+      backdrop-filter: blur(4px);
+    }
+    .modal {
+      background: #0f172a;
+      border: 1px solid rgba(148,163,184,0.3);
+      padding: 20px;
+      border-radius: 16px;
+      width: min(420px, 100%);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    .modal h2 { margin-top: 0; }
+    .modal ul { padding-left: 18px; color: #cbd5e1; }
+    .modal ul li { margin-bottom: 6px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px; }
+
+    .gameover {
+      text-align: center;
+      color: #e2e8f0;
+    }
+    .gameover h1 { font-size: 2.2rem; margin-bottom: 6px; background: linear-gradient(135deg, #22d3ee, #6366f1); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .gameover .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 14px 0; }
+    .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(148,163,184,0.2); border-radius: 12px; padding: 12px; font-weight: 700; }
+    
+    input[type="text"] {
+      outline: none;
+    }
+    input[type="text"]:focus {
+      border-color: rgba(34, 211, 238, 0.6) !important;
+      box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
+    }
+
+    @media (min-width: 900px) {
+      .board { max-height: 70vh; }
+    }
+    @media (max-width: 768px) {
+      .header-stats {
+        order: 3;
+        width: 100%;
+        justify-content: space-around;
+        margin-top: 8px;
+        gap: 12px;
+      }
+      header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 6px 0;
+      }
+      .brand {
+        justify-content: center;
+        font-size: 1.2rem;
+      }
+      .controls {
+        justify-content: center;
+      }
+      .stat-item {
+        min-width: 50px;
+      }
+      .stat-label {
+        font-size: 0.6rem;
+      }
+      .stat-value {
+        font-size: 0.85rem;
+      }
+      button {
+        padding: 12px 16px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        LexiStack <span class="badge">v2</span>
+        <span id="userBadge" style="display: none; margin-left: 8px; font-size: 0.7rem; color: #94a3b8; font-weight: 500; cursor: pointer; text-decoration: underline; text-decoration-color: rgba(148,163,184,0.5);" title="Click to edit profile"></span>
+      </div>
+      <div class="header-stats" id="headerStats">
+        <div class="stat-item">
+          <span class="stat-label">Score</span>
+          <span class="stat-value" id="headerScore">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Combo</span>
+          <span class="stat-value combo" id="headerCombo">x1.0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Time</span>
+          <span class="stat-value time-positive" id="headerTime">60.0s</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Next Row</span>
+          <span class="stat-value" id="headerRowTimer">7.0s</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Level</span>
+          <span class="stat-value level" id="headerLevel">1</span>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="howToPlayBtn" style="display: none;">How to Play</button>
+        <button id="pauseBtn">Pause</button>
+        <button id="resetBtn">Restart</button>
+      </div>
+    </header>
+
+    <div class="board-wrap">
+      <!-- Start Button Overlay -->
+      <div class="start-overlay" id="startOverlay" style="display: none;">
+        <button class="start-button" id="startButton">Start</button>
+      </div>
+      
+      <!-- Countdown Overlay -->
+      <div class="countdown-overlay" id="countdownOverlay" style="display: none;">
+        <canvas id="countdownCanvas"></canvas>
+      </div>
+      
+      <div class="board" id="board">
+        <svg class="path-layer" id="pathLayer"></svg>
+        <div class="grid" id="grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="floating-word" id="floatingWord"><div class="word" id="floatingText"></div><div class="points" id="floatingPoints"></div></div>
+  <div class="toast-area" id="toasts"></div>
+
+  <div class="overlay" id="registerModal" style="display:none;">
+    <div class="modal">
+      <h2>Welcome to LexiStack!</h2>
+      <p style="color: #cbd5e1; margin-bottom: 16px;">Create an account to start playing. Username and password are auto-generated - you can change them if you want!</p>
+      <form id="registerForm" style="margin-bottom: 12px;" autocomplete="on">
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+          <input 
+            type="text" 
+            id="registerUsernameInput" 
+            name="username"
+            placeholder="Choose a username" 
+            style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(148,163,184,0.3); border-radius: 8px; color: #e2e8f0; font-size: 1rem; box-sizing: border-box;"
+            maxlength="20"
+            autocomplete="username"
+            spellcheck="false"
+            autocorrect="off"
+            autocapitalize="off"
+            inputmode="text"
+            required
+          >
+          <button type="button" id="regenerateUsernameBtn" style="padding: 12px 16px; background: rgba(148,163,184,0.2); border: 1px solid rgba(148,163,184,0.3); border-radius: 8px; color: #cbd5e1; cursor: pointer; font-size: 0.85rem; white-space: nowrap;" title="Generate new username">🔄</button>
+        </div>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+          <input 
+            type="password" 
+            id="registerPasswordInput" 
+            name="new-password"
+            placeholder="Create a password (min 6 characters)" 
+            style="flex: 1; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(148,163,184,0.3); border-radius: 8px; color: #e2e8f0; font-size: 1rem; box-sizing: border-box;"
+            autocomplete="new-password"
+            spellcheck="false"
+            autocorrect="off"
+            autocapitalize="off"
+            required
+            minlength="6"
+          >
+          <button type="button" id="regeneratePasswordBtn" style="padding: 12px 16px; background: rgba(148,163,184,0.2); border: 1px solid rgba(148,163,184,0.3); border-radius: 8px; color: #cbd5e1; cursor: pointer; font-size: 0.85rem; white-space: nowrap;" title="Generate new password">🔄</button>
+        </div>
+        <input 
+          type="password" 
+          id="registerConfirmPasswordInput" 
+          name="confirm-password"
+          placeholder="Confirm password" 
+          style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(148,163,184,0.3); border-radius: 8px; color: #e2e8f0; font-size: 1rem; box-sizing: border-box;"
+          autocomplete="new-password"
+          spellcheck="false"
+          autocorrect="off"
+          autocapitalize="off"
+          required
+          minlength="6"
+        >
+        <div id="registerStatus" style="margin-top: 8px; font-size: 0.85rem; color: #94a3b8; min-height: 20px;"></div>
+      </form>
+      <div class="modal-actions">
+        <button type="submit" form="registerForm" class="primary" id="registerBtn" style="width: 100%;">Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="settingsModal" style="display:none;">
+    <div class="modal">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="margin: 0;">Account Management</h2>
+        <button id="settingsLogoutBtn" class="danger" style="padding: 8px 16px; font-size: 0.85rem;">Log Out</button>
+      </div>
+      <form id="settingsForm" style="margin-bottom: 12px;">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 6px; font-size: 0.9rem; color: #cbd5e1; font-weight: 600;">Username</label>
+          <input 
+            type="text" 
+            id="settingsUsernameDisplay" 
+            readonly
+            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(148,163,184,0.2); border-radius: 8px; color: #94a3b8; font-size: 1rem; box-sizing: border-box; cursor: not-allowed;"
+          >
+          <div style="margin-top: 4px; font-size: 0.75rem; color: #94a3b8;">Username cannot be changed</div>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+          <label for="settingsDisplayName" style="display: block; margin-bottom: 6px; font-size: 0.9rem; color: #cbd5e1; font-weight: 600;">Display Name</label>
+          <input 
+            type="text" 
+            id="settingsDisplayName" 
+            name="displayname"
+            placeholder="Display name" 
+            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(148,163,184,0.3); border-radius: 8px; color: #e2e8f0; font-size: 1rem; box-sizing: border-box;"
+            maxlength="30"
+            autocomplete="name"
+            spellcheck="false"
+            autocorrect="off"
+            autocapitalize="off"
+          >
+          <div style="margin-top: 4px; font-size: 0.75rem; color: #94a3b8;">This is how your name appears to others</div>
+        </div>
+        
+        <div style="margin-bottom: 16px; padding: 12px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <span style="font-size: 0.9rem; color: #cbd5e1; font-weight: 600;">Global Leaderboard Rank</span>
+            <span id="userRank" style="font-size: 1.1rem; color: #60a5fa; font-weight: 700;">-</span>
+          </div>
+          <div style="margin-top: 8px;">
+            <button type="button" id="viewLeaderboardBtn" style="width: 100%; padding: 8px; background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.4); border-radius: 6px; color: #93c5fd; cursor: pointer; font-size: 0.85rem;">View Full Leaderboard</button>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 16px; padding-top: 16px; border-top: 1px solid rgba(148,163,184,0.2);">
+          <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; color: #cbd5e1; font-weight: 600;">Change Password</label>
+          <input 
+            type="password" 
+            id="settingsCurrentPassword" 
+            name="current-password"
+            placeholder="Current password" 
+            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(148,163,184,0.3); border-radius: 8px; color: #e2e8f0; font-size: 1rem; box-sizing: border-box; margin-bottom: 12px;"
+            autocomplete="current-password"
+            spellcheck="false"
+            autocorrect="off"
+            autocapitalize="off"
+          >
+          <input 
+            type="password" 
+            id="settingsNewPassword" 
+            name="new-password"
+            placeholder="New password (min 6 characters)" 
+            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(148,163,184,0.3); border-radius: 8px; color: #e2e8f0; font-size: 1rem; box-sizing: border-box; margin-bottom: 12px;"
+            autocomplete="new-password"
+            spellcheck="false"
+            autocorrect="off"
+            autocapitalize="off"
+            minlength="6"
+          >
+          <input 
+            type="password" 
+            id="settingsConfirmPassword" 
+            name="confirm-password"
+            placeholder="Confirm new password" 
+            style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(148,163,184,0.3); border-radius: 8px; color: #e2e8f0; font-size: 1rem; box-sizing: border-box;"
+            autocomplete="new-password"
+            spellcheck="false"
+            autocorrect="off"
+            autocapitalize="off"
+            minlength="6"
+          >
+          <div style="margin-top: 4px; font-size: 0.75rem; color: #94a3b8;">Leave blank to keep current password</div>
+        </div>
+        
+        <div id="settingsStatus" style="margin-top: 8px; font-size: 0.85rem; color: #94a3b8; min-height: 20px;"></div>
+      </form>
+      <div class="modal-actions" style="display: flex; gap: 8px;">
+        <button type="submit" form="settingsForm" class="primary" id="settingsSaveBtn" style="flex: 1;">Save Changes</button>
+        <button id="settingsCancelBtn" style="flex: 1;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="tutorial" style="display:none;">
+    <div class="modal">
+      <h2>How to Play</h2>
+      <ul>
+        <li>Drag across adjacent tiles (including diagonals) to build a word.</li>
+        <li>Release after 2+ letters to auto-submit.</li>
+        <li>Valid words score points, add time, and raise your combo.</li>
+        <li>New letter rows spawn from the bottom—keep the tower from reaching the top.</li>
+        <li>Pause anytime; resume to continue the climb.</li>
+      </ul>
+      <div class="modal-actions"><button class="primary" id="startGame">Play</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="gameOver" style="display:none;">
+    <div class="modal gameover">
+      <h1>Game Over</h1>
+      <div class="summary">
+        <div class="card">Score<br><span id="finalScore">0</span></div>
+        <div class="card">Best Combo<br><span id="finalCombo">x1.0</span></div>
+        <div class="card">Longest Word<br><span id="finalLongest">-</span></div>
+      </div>
+      <div id="userSection" style="margin: 16px 0; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; display: none;">
+        <div style="margin-bottom: 8px; font-size: 0.85rem; color: #94a3b8;">Save your score:</div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="text" id="usernameInput" placeholder="Enter username" style="flex: 1; padding: 8px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(148,163,184,0.3); border-radius: 8px; color: #e2e8f0; font-size: 0.9rem;" maxlength="20">
+          <button class="primary" id="saveScoreBtn" style="padding: 8px 16px;">Save</button>
+        </div>
+        <div id="userStatus" style="margin-top: 8px; font-size: 0.75rem; color: #94a3b8;"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="leaderboardBtn" style="display: none;">Leaderboard</button>
+        <button id="homeBtn">Home</button>
+        <button class="primary" id="againBtn">Play Again</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="overlay" id="leaderboardModal" style="display:none;">
+    <div class="modal">
+      <h2>Top Scores</h2>
+      <div id="leaderboardList" style="max-height: 400px; overflow-y: auto; margin: 16px 0;">
+        <div style="text-align: center; padding: 20px; color: #94a3b8;">Loading...</div>
+      </div>
+      <div class="modal-actions">
+        <button id="closeLeaderboardBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const rows = 10;
+    const cols = 6;
+    const initialRows = 5;
+    const letterWeights = {
+      E: 12, A: 9, I: 9, O: 8, N: 6, R: 6, T: 6, L: 4, S: 4, U: 4, D: 4, G: 3,
+      B: 2, C: 2, M: 2, P: 2, F: 2, H: 2, V: 2, W: 2, Y: 2, K: 1, J: 1, X: 1, Q: 1, Z: 1
+    };
+    const letterValues = {A:1,E:1,I:1,L:1,N:1,O:1,R:1,S:1,T:1,U:1,D:2,G:2,B:3,C:3,M:3,P:3,F:4,H:4,V:4,W:4,Y:4,K:5,J:8,X:8,Q:10,Z:10};
+    const highLetters = new Set(['Q','Z','X','J']);
+    
+    // Color mapping based on letter values
+    function getLetterColor(letter) {
+      const value = letterValues[letter] || 1;
+      if (value === 1) return '#e2e8f0'; // Light gray for common letters
+      if (value === 2) return '#a5f3fc'; // Cyan for 2-point letters
+      if (value === 3) return '#86efac'; // Light green for 3-point letters
+      if (value === 4) return '#93c5fd'; // Light blue for 4-point letters
+      if (value === 5) return '#fbbf24'; // Amber for 5-point letters
+      if (value === 8) return '#f97316'; // Orange for 8-point letters
+      if (value === 10) return '#fb923c'; // Bright orange for 10-point letters (Q, Z)
+      return '#e2e8f0';
+    }
+    
+    function getLetterGlowColor(letter) {
+      const value = letterValues[letter] || 1;
+      if (value === 1) return 'rgba(226, 232, 240, 0.3)';
+      if (value === 2) return 'rgba(165, 243, 252, 0.4)';
+      if (value === 3) return 'rgba(134, 239, 172, 0.4)';
+      if (value === 4) return 'rgba(147, 197, 253, 0.4)';
+      if (value === 5) return 'rgba(251, 191, 36, 0.5)';
+      if (value === 8) return 'rgba(249, 115, 22, 0.5)';
+      if (value === 10) return 'rgba(251, 146, 60, 0.6)';
+      return 'rgba(226, 232, 240, 0.3)';
+    }
+    const fallbackWords = ['STACK','WORD','GAME','CODE','DRAG','MOVE','TIME','PAUSE','LEVEL','POINT','GRID','ROWS','TILE','RAISE','QUIZ','JAZZ'];
+    
+    // Generator functions for username and password (must be defined early)
+    const adjectives = ['happy', 'swift', 'brave', 'clever', 'bright', 'calm', 'bold', 'quick', 'wise', 'cool', 'fast', 'sharp', 'smart', 'wild', 'proud', 'kind', 'neat', 'calm', 'bold', 'calm'];
+    const colors = ['red', 'blue', 'green', 'gold', 'silver', 'purple', 'pink', 'cyan', 'amber', 'teal', 'lime', 'rose', 'violet', 'indigo', 'orange', 'yellow', 'emerald', 'sky', 'fuchsia', 'mint'];
+    const animals = ['cat', 'dog', 'fox', 'bear', 'wolf', 'lion', 'tiger', 'eagle', 'hawk', 'owl', 'deer', 'bird', 'fish', 'shark', 'whale', 'dolphin', 'panda', 'koala', 'penguin', 'rabbit'];
+    
+    function generateUsername() {
+      const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const animal = animals[Math.floor(Math.random() * animals.length)];
+      const num = Math.floor(Math.random() * 1000);
+      const username = `${adj}${color}${animal}${num}`.substring(0, 20);
+      return username.replace(/[^a-zA-Z0-9_]/g, '');
+    }
+    
+    function generatePassword() {
+      const length = 16;
+      const charset = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789!@#$%^&*';
+      let password = '';
+      const hasLower = 'abcdefghjkmnpqrstuvwxyz';
+      const hasUpper = 'ABCDEFGHJKMNPQRSTUVWXYZ';
+      const hasNumber = '23456789';
+      const hasSymbol = '!@#$%^&*';
+      
+      // Ensure at least one of each type
+      password += hasLower[Math.floor(Math.random() * hasLower.length)];
+      password += hasUpper[Math.floor(Math.random() * hasUpper.length)];
+      password += hasNumber[Math.floor(Math.random() * hasNumber.length)];
+      password += hasSymbol[Math.floor(Math.random() * hasSymbol.length)];
+      
+      // Fill the rest
+      for (let i = password.length; i < length; i++) {
+        password += charset[Math.floor(Math.random() * charset.length)];
+      }
+      
+      // Shuffle
+      return password.split('').sort(() => Math.random() - 0.5).join('');
+    }
+
+    const gridEl = document.getElementById('grid');
+    const pathLayer = document.getElementById('pathLayer');
+    const floatingWord = document.getElementById('floatingWord');
+    const floatingText = document.getElementById('floatingText');
+    const floatingPoints = document.getElementById('floatingPoints');
+    const headerScore = document.getElementById('headerScore');
+    const headerCombo = document.getElementById('headerCombo');
+    const headerTime = document.getElementById('headerTime');
+    const headerRowTimer = document.getElementById('headerRowTimer');
+    const headerLevel = document.getElementById('headerLevel');
+    const userBadge = document.getElementById('userBadge');
+    const registerModal = document.getElementById('registerModal');
+    const registerUsernameInput = document.getElementById('registerUsernameInput');
+    const registerPasswordInput = document.getElementById('registerPasswordInput');
+    const registerConfirmPasswordInput = document.getElementById('registerConfirmPasswordInput');
+    const registerBtn = document.getElementById('registerBtn');
+    const registerStatus = document.getElementById('registerStatus');
+    const tutorial = document.getElementById('tutorial');
+    const startBtn = document.getElementById('startGame');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const gameOver = document.getElementById('gameOver');
+    const finalScore = document.getElementById('finalScore');
+    const finalCombo = document.getElementById('finalCombo');
+    const finalLongest = document.getElementById('finalLongest');
+    const againBtn = document.getElementById('againBtn');
+    const homeBtn = document.getElementById('homeBtn');
+    const toastArea = document.getElementById('toasts');
+    const userSection = document.getElementById('userSection');
+    const usernameInput = document.getElementById('usernameInput');
+    const saveScoreBtn = document.getElementById('saveScoreBtn');
+    const userStatus = document.getElementById('userStatus');
+    const leaderboardBtn = document.getElementById('leaderboardBtn');
+    const leaderboardModal = document.getElementById('leaderboardModal');
+    const leaderboardList = document.getElementById('leaderboardList');
+    const closeLeaderboardBtn = document.getElementById('closeLeaderboardBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const settingsDisplayName = document.getElementById('settingsDisplayName');
+    const settingsCurrentPassword = document.getElementById('settingsCurrentPassword');
+    const settingsNewPassword = document.getElementById('settingsNewPassword');
+    const settingsConfirmPassword = document.getElementById('settingsConfirmPassword');
+    const settingsSaveBtn = document.getElementById('settingsSaveBtn');
+    const settingsCancelBtn = document.getElementById('settingsCancelBtn');
+    const settingsStatus = document.getElementById('settingsStatus');
+    const settingsForm = document.getElementById('settingsForm');
+    const settingsUsernameDisplay = document.getElementById('settingsUsernameDisplay');
+    const userRank = document.getElementById('userRank');
+    const viewLeaderboardBtn = document.getElementById('viewLeaderboardBtn');
+    const regenerateUsernameBtn = document.getElementById('regenerateUsernameBtn');
+    const regeneratePasswordBtn = document.getElementById('regeneratePasswordBtn');
+    const settingsLogoutBtn = document.getElementById('settingsLogoutBtn');
+
+    let dictionary = new Set(fallbackWords);
+    let grid = [];
+    let selection = [];
+    let running = false;
+    let paused = false;
+    let lastTime = null;
+    let timeLeft = 60;
+    let rowInterval = 7;
+    let rowTimer = 7;
+    let score = 0;
+    let combo = 1.0;
+    let bestCombo = 1.0;
+    let longestWord = '';
+    let lastWordAt = 0;
+    let decayBuffer = 0;
+    let level = 1;
+    let rowsAdded = 0;
+    let dragging = false;
+    let pointerId = null;
+    let tileRenderers = new Map();
+    let tileElements = new Map(); // Cache tile DOM elements for quick updates
+    let lastSelection = []; // Track previous selection to detect changes
+    let currentUser = null;
+    let wordsPlayed = 0;
+    
+    // API functions
+    const API_BASE_URL = 'https://lexi-stack-api.narduk.workers.dev';
+    
+    // User management with localStorage
+    function saveUserToStorage(user) {
+      localStorage.setItem('lexistack_user', JSON.stringify(user));
+    }
+    
+    function loadUserFromStorage() {
+      const stored = localStorage.getItem('lexistack_user');
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (e) {
+          return null;
+        }
+      }
+      return null;
+    }
+    
+    async function checkUsernameAvailability(username) {
+      try {
+        // Try the check endpoint first
+        const response = await fetch(`${API_BASE_URL}/api/user/check?username=${encodeURIComponent(username)}`);
+        
+        // Handle non-200 status codes
+        if (!response.ok) {
+          if (response.status === 409 || response.status === 400) {
+            // Conflict or bad request - username likely taken
+            return false;
+          }
+          if (response.status === 404) {
+            // Endpoint doesn't exist, try alternative method
+            // Try to query user by username (if API supports it)
+            try {
+              const userResponse = await fetch(`${API_BASE_URL}/api/user?username=${encodeURIComponent(username)}`);
+              if (userResponse.ok) {
+                const userData = await userResponse.json();
+                // If user exists, username is taken
+                if (userData.user || userData.username) {
+                  return false;
+                }
+              }
+            } catch (e) {
+              // Fallback: can't check, will rely on POST endpoint validation
+              console.warn('Could not check username availability, will validate on creation');
+            }
+            // If check endpoint doesn't exist, we'll validate on creation
+            return true;
+          }
+          // Other errors - assume available for now, will check on create
+          return true;
+        }
+        
+        const data = await response.json();
+        // Check multiple possible response formats
+        if (data.available === false || data.exists === true || data.taken === true) {
+          return false;
+        }
+        if (data.available === true || data.exists === false || data.taken === false) {
+          return true;
+        }
+        // Default: if we got a 200 response, assume available
+        return true;
+      } catch (error) {
+        console.error('Error checking username:', error);
+        // If API fails, assume available (will be checked again on create)
+        return true;
+      }
+    }
+    
+    async function getOrCreateUser(username, password = null, userId = null) {
+      try {
+        // First check if username is available (unless updating existing user)
+        if (!userId) {
+          const available = await checkUsernameAvailability(username);
+          if (!available) {
+            throw new Error('Username already taken');
+          }
+        }
+        
+        const requestBody = { username, userId };
+        if (password) {
+          requestBody.password = password;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/api/user`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        });
+        
+        // Check response status for conflicts
+        if (response.status === 409 || response.status === 400) {
+          const errorData = await response.json().catch(() => ({}));
+          // Check error message for username conflict indicators
+          if (errorData.error || errorData.message) {
+            const errorMsg = (errorData.error || errorData.message).toLowerCase();
+            if (errorMsg.includes('taken') || errorMsg.includes('exists') || errorMsg.includes('duplicate') || errorMsg.includes('already')) {
+              throw new Error('Username already taken');
+            }
+          }
+          // If 409/400 but no specific message, still treat as taken
+          throw new Error('Username already taken');
+        }
+        
+        if (!response.ok) {
+          throw new Error('Failed to create user');
+        }
+        
+        const data = await response.json();
+        
+        // Double-check response data for error indicators
+        if (data.error) {
+          const errorMsg = data.error.toLowerCase();
+          if (errorMsg.includes('taken') || errorMsg.includes('exists') || errorMsg.includes('duplicate') || errorMsg.includes('already')) {
+            throw new Error('Username already taken');
+          }
+        }
+        
+        if (!data.user) {
+          throw new Error('Failed to create user');
+        }
+        
+        saveUserToStorage(data.user);
+        return data.user;
+      } catch (error) {
+        console.error('Error creating user:', error);
+        // Re-throw username taken errors
+        if (error.message === 'Username already taken') {
+          throw error;
+        }
+        // If API fails for other reasons, create a local-only user
+        const localUser = {
+          id: userId || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          username: username,
+          local: true
+        };
+        saveUserToStorage(localUser);
+        return localUser;
+      }
+    }
+    
+    async function submitScore(userId, scoreData) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/scores`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            score: scoreData.score,
+            combo: scoreData.combo,
+            longestWord: scoreData.longestWord,
+            level: scoreData.level,
+            wordsPlayed: scoreData.wordsPlayed || 0,
+          }),
+        });
+        const data = await response.json();
+        return data.success;
+      } catch (error) {
+        console.error('Error submitting score:', error);
+        return false;
+      }
+    }
+    
+    async function getLeaderboard(limit = 10, offset = 0) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/scores?limit=${limit}&offset=${offset}`);
+        const data = await response.json();
+        return data.scores || [];
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+        return [];
+      }
+    }
+    
+    async function getAllScores() {
+      // Fetch all scores in batches
+      const allScores = [];
+      let offset = 0;
+      const batchSize = 100;
+      
+      while (true) {
+        const batch = await getLeaderboard(batchSize, offset);
+        if (batch.length === 0) break;
+        allScores.push(...batch);
+        if (batch.length < batchSize) break;
+        offset += batchSize;
+      }
+      
+      return allScores;
+    }
+    
+    async function trackWord(word) {
+      try {
+        await fetch(`${API_BASE_URL}/api/words`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ word }),
+        });
+      } catch (error) {
+        // Silently fail - word tracking is optional
+      }
+    }
+    
+    async function updateUser(userId, updates) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/user`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, ...updates }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to update user');
+        }
+        const data = await response.json();
+        if (data.user) {
+          saveUserToStorage(data.user);
+        }
+        return data.user;
+      } catch (error) {
+        console.error('Error updating user:', error);
+        throw error;
+      }
+    }
+
+    const letterPool = (() => {
+      const pool = [];
+      Object.entries(letterWeights).forEach(([letter, weight]) => {
+        for (let i = 0; i < weight; i++) pool.push(letter);
+      });
+      return pool;
+    })();
+
+    function pickLetter() {
+      return letterPool[Math.floor(Math.random() * letterPool.length)];
+    }
+
+    function resetGrid() {
+      grid = Array.from({ length: rows }, () => Array.from({ length: cols }, () => null));
+      for (let r = rows - 1; r >= rows - initialRows; r--) {
+        for (let c = 0; c < cols; c++) {
+          grid[r][c] = { letter: pickLetter(), id: `${r}-${c}-${Date.now()}-${Math.random()}` };
+        }
+      }
+    }
+
+    function createThreeJSText(letter, isHigh, isSelected) {
+      const canvas = document.createElement('canvas');
+      // Reduce canvas size on mobile to prevent memory issues
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const pixelRatio = isMobile ? 1 : Math.max(window.devicePixelRatio || 1, 2);
+      const size = isMobile ? 256 : 512 * pixelRatio; // Much smaller on mobile
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      
+      // Enable text rendering hints for better quality
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
+      // Use color based on letter value
+      const baseColor = getLetterColor(letter);
+      const glowColor = getLetterGlowColor(letter);
+      ctx.fillStyle = baseColor;
+      ctx.shadowColor = glowColor;
+      ctx.shadowBlur = 4;
+      
+      // Use a refined font with better proportions - taller and more elegant
+      const fontSize = size * 0.75; // Already accounts for pixelRatio since size includes it
+      ctx.font = `600 ${fontSize}px 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.letterSpacing = '-0.02em'; // Tighter letter spacing for cleaner look
+      
+      // Apply transform to make letters taller and narrower with better proportions
+      ctx.save();
+      ctx.translate(size / 2, size / 2 + size * 0.25);
+      ctx.scale(0.65, 1.25); // Optimized: 0.65 width (skinnier), 1.25 height (taller)
+      ctx.fillText(letter, 0, 0);
+      ctx.restore();
+      
+      return canvas;
+    }
+
+    function renderTileWithThreeJS(tileDiv, letter, isHigh, isSelected, row, col) {
+      const tileId = `${row}-${col}`;
+      const existingCanvas = tileDiv.querySelector('canvas');
+      
+      // Verify letter matches what's in the grid
+      const gridTile = grid[row] && grid[row][col];
+      if (gridTile && gridTile.letter !== letter) {
+        console.error(`Letter mismatch at [${row},${col}]: grid has "${gridTile.letter}", rendering "${letter}"`);
+        // Use the letter from grid to ensure consistency
+        letter = gridTile.letter;
+      }
+      
+      // Only recreate canvas if letter, isHigh, or isSelected changed
+      const cacheKey = `${letter}-${isHigh}-${isSelected}`;
+      const cached = tileRenderers.get(tileId);
+      
+      if (cached && cached.cacheKey === cacheKey && existingCanvas) {
+        // Canvas already exists and matches, just update classes
+        // But verify the letter attribute matches
+        if (tileDiv.dataset.letter !== letter) {
+          tileDiv.dataset.letter = letter;
+        }
+        return;
+      }
+      
+      // Clean up old canvas properly before creating new one
+      if (existingCanvas) {
+        const ctx = existingCanvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, existingCanvas.width, existingCanvas.height);
+        }
+        existingCanvas.width = 0;
+        existingCanvas.height = 0;
+        existingCanvas.remove();
+      }
+      
+      // Remove old cache entry if it exists
+      if (cached && cached.canvas) {
+        const oldCtx = cached.canvas.getContext('2d');
+        if (oldCtx) {
+          oldCtx.clearRect(0, 0, cached.canvas.width, cached.canvas.height);
+        }
+        cached.canvas.width = 0;
+        cached.canvas.height = 0;
+      }
+      
+      // Create new canvas
+      const canvas = createThreeJSText(letter, isHigh, isSelected);
+      // Store letter on canvas for debugging
+      canvas.dataset.letter = letter;
+      tileDiv.appendChild(canvas);
+      
+      // Ensure data attribute matches
+      tileDiv.dataset.letter = letter;
+      
+      // Cache the render info
+      tileRenderers.set(tileId, { cacheKey, canvas, letter });
+    }
+    
+    function updateTileSelection(row, col, isSelected) {
+      const tileId = `${row}-${col}`;
+      const tileEl = tileElements.get(tileId);
+      if (!tileEl) return;
+      
+      if (isSelected) {
+        tileEl.classList.add('selected');
+      } else {
+        tileEl.classList.remove('selected');
+      }
+    }
+
+    function renderGrid(forceFullRender = false) {
+      const needsFullRender = forceFullRender || tileElements.size === 0;
+      
+      if (needsFullRender) {
+        // Clean up all existing canvases before clearing
+        tileRenderers.forEach((value, tileId) => {
+          if (value.canvas) {
+            const ctx = value.canvas.getContext('2d');
+            if (ctx) {
+              ctx.clearRect(0, 0, value.canvas.width, value.canvas.height);
+            }
+            value.canvas.width = 0;
+            value.canvas.height = 0;
+          }
+        });
+        
+        // Full render: clear and rebuild everything
+        gridEl.innerHTML = '';
+        tileRenderers.clear();
+        tileElements.clear();
+        gridEl.style.setProperty('--rows', rows);
+        gridEl.style.setProperty('--cols', cols);
+        
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.row = r;
+            cell.dataset.col = c;
+            const tile = grid[r][c];
+            if (tile) {
+              const div = document.createElement('div');
+              div.className = 'tile';
+              div.dataset.row = r;
+              div.dataset.col = c;
+              const isHigh = highLetters.has(tile.letter);
+              const isSelected = selection.some(s => s.row === r && s.col === c);
+              const letterValue = letterValues[tile.letter] || 1;
+              div.classList.add(`value-${letterValue}`);
+              if (isHigh) div.classList.add('high');
+              if (isSelected) div.classList.add('selected');
+              // Store letter in data attribute for verification
+              div.dataset.letter = tile.letter;
+              renderTileWithThreeJS(div, tile.letter, isHigh, isSelected, r, c);
+              cell.appendChild(div);
+              tileElements.set(`${r}-${c}`, div);
+            }
+            gridEl.appendChild(cell);
+          }
+        }
+      } else {
+        // Incremental update: only update selection state
+        const currentSelectionSet = new Set(selection.map(s => `${s.row}-${s.col}`));
+        const lastSelectionSet = new Set(lastSelection.map(s => `${s.row}-${s.col}`));
+        
+        // Update tiles that changed selection state
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const tileId = `${r}-${c}`;
+            const isCurrentlySelected = currentSelectionSet.has(tileId);
+            const wasSelected = lastSelectionSet.has(tileId);
+            
+            if (isCurrentlySelected !== wasSelected) {
+              updateTileSelection(r, c, isCurrentlySelected);
+            }
+          }
+        }
+      }
+      
+      lastSelection = [...selection];
+      drawPath();
+    }
+
+    function drawPath() {
+      pathLayer.setAttribute('viewBox', `0 0 ${pathLayer.clientWidth} ${pathLayer.clientHeight}`);
+      if (selection.length < 2) {
+        pathLayer.innerHTML = '';
+        return;
+      }
+      const pts = selection.map(sel => {
+        const cell = gridEl.querySelector(`.cell[data-row="${sel.row}"][data-col="${sel.col}"]`);
+        if (!cell) return null;
+        const rect = cell.getBoundingClientRect();
+        const parent = gridEl.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2 - parent.left, y: rect.top + rect.height / 2 - parent.top };
+      }).filter(Boolean);
+      const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      poly.setAttribute('fill', 'none');
+      poly.setAttribute('stroke', '#22d3ee');
+      poly.setAttribute('stroke-width', '5');
+      poly.setAttribute('stroke-linecap', 'round');
+      poly.setAttribute('stroke-linejoin', 'round');
+      poly.setAttribute('opacity', '0.85');
+      poly.setAttribute('filter', 'drop-shadow(0 0 4px rgba(34, 211, 238, 0.5))');
+      poly.setAttribute('points', pts.map(p => `${p.x},${p.y}`).join(' '));
+      pathLayer.innerHTML = '';
+      pathLayer.appendChild(poly);
+    }
+
+    function addToast(message, type='success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      toastArea.appendChild(toast);
+      setTimeout(() => toast.remove(), 2200);
+    }
+
+    let lastSelectionTime = 0;
+    const SELECTION_COOLDOWN = 50; // ms between selections to prevent accidental picks
+    
+    function handleSelection(row, col, e) {
+      // Validate bounds first
+      if (row < 0 || row >= rows || col < 0 || col >= cols) return;
+      if (!grid[row] || !grid[row][col]) return;
+      if (!dragging) return;
+      
+      // Cooldown to prevent rapid accidental selections
+      const now = performance.now();
+      if (now - lastSelectionTime < SELECTION_COOLDOWN) return;
+      
+      const already = selection.find(s => s.row === row && s.col === col);
+      if (already) return;
+      
+      if (selection.length) {
+        const last = selection[selection.length - 1];
+        const rDiff = Math.abs(last.row - row);
+        const cDiff = Math.abs(last.col - col);
+        if (rDiff > 1 || cDiff > 1) return;
+        
+        // Require pointer to be more centered on tile (at least 30% from edges)
+        if (e) {
+          const cell = gridEl.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+          if (cell) {
+            const rect = cell.getBoundingClientRect();
+            const relativeX = (e.clientX - rect.left) / rect.width;
+            const relativeY = (e.clientY - rect.top) / rect.height;
+            // Only allow selection if pointer is in center 40% of tile (30% margin on each side)
+            if (relativeX < 0.3 || relativeX > 0.7 || relativeY < 0.3 || relativeY > 0.7) {
+              return;
+            }
+          }
+        }
+      }
+      
+      lastSelectionTime = now;
+      // Always use the current tile from grid to ensure we have the latest letter
+      const currentTile = grid[row][col];
+      if (!currentTile) {
+        console.warn(`No tile at [${row},${col}] during selection`);
+        return; // Tile was removed
+      }
+      // Use the letter directly from the grid
+      selection.push({ row, col, letter: currentTile.letter });
+      updateFloatingWord();
+      renderGrid(false); // Use incremental update
+    }
+
+    function selectionWord() {
+      const word = selection.map(s => s.letter).join('');
+      // Debug: log selection details
+      if (selection.length > 0) {
+        console.log('Selection:', selection.map(s => `[${s.row},${s.col}]=${s.letter}`).join(' -> '), 'Word:', word);
+      }
+      return word;
+    }
+
+    function wordScore(word) {
+      const letters = word.split('');
+      const sum = letters.reduce((acc, ch) => acc + (letterValues[ch] || 0), 0);
+      const lengthBonus = 1 + word.length * 0.1;
+      return Math.round(sum * lengthBonus * combo);
+    }
+
+    function validateWord(word) {
+      if (word.length < 3 || word.length > 8) return false;
+      if (!/^[A-Z]+$/.test(word)) return false;
+      return dictionary.has(word);
+    }
+
+    function submitSelection() {
+      const word = selectionWord();
+      if (word.length < 3) {
+        if (word.length === 2) {
+          addToast('Need at least 3 letters to form a word', 'error');
+        }
+        hideFloatingWord();
+        clearSelection();
+        return;
+      }
+      if (!validateWord(word)) {
+        combo = 1.0;
+        updateUI();
+        flashSelection();
+        // Shake the floating word
+        floatingWord.classList.add('shake');
+        setTimeout(() => {
+          floatingWord.classList.remove('shake');
+          hideFloatingWord();
+        }, 300);
+        addToast(`${word} is not a valid word`, 'error');
+        return;
+      }
+      hideFloatingWord();
+      const gained = wordScore(word);
+      score += gained;
+      longestWord = word.length > longestWord.length ? word : longestWord;
+      wordsPlayed++;
+      // Animate score instead of showing toast
+      animateScoreGain(gained);
+      combo = Math.min(5, combo + 0.1);
+      bestCombo = Math.max(bestCombo, combo);
+      lastWordAt = performance.now();
+      decayBuffer = 0;
+      const timeBonus = Math.min(3, 1 + Math.floor(word.length / 3));
+      timeLeft += timeBonus;
+      removeTiles();
+      applyGravity();
+      clearSelection();
+      renderGrid(true); // Force full render after gravity changes
+      rowInterval = Math.max(3, rowInterval - 0.05);
+      updateUI();
+      // Track word usage (async, don't wait)
+      trackWord(word);
+    }
+
+    function flashSelection() {
+      // Capture selection coordinates - keep selection during animation
+      const selectionCopy = [...selection];
+      
+      // Add invalid class to all selected tiles
+      selectionCopy.forEach(sel => {
+        const tileEl = gridEl.querySelector(`.cell[data-row="${sel.row}"][data-col="${sel.col}"] .tile`);
+        if (tileEl) {
+          tileEl.classList.add('invalid');
+        }
+      });
+      
+      // After animation completes, remove invalid class, clear selection, and re-render
+      setTimeout(() => {
+        // Remove invalid class from tiles
+        selectionCopy.forEach(sel => {
+          const tileEl = gridEl.querySelector(`.cell[data-row="${sel.row}"][data-col="${sel.col}"] .tile`);
+          if (tileEl) {
+            tileEl.classList.remove('invalid');
+          }
+        });
+        // Clear selection and re-render grid
+        clearSelection();
+      }, 300);
+    }
+
+    function removeTiles() {
+      selection.forEach(sel => {
+        const tileId = `${sel.row}-${sel.col}`;
+        // Verify the tile exists and letter matches before removing
+        const gridTile = grid[sel.row] && grid[sel.row][sel.col];
+        if (gridTile && gridTile.letter !== sel.letter) {
+          console.warn(`Letter mismatch when removing tile at [${sel.row},${sel.col}]: selection has "${sel.letter}", grid has "${gridTile.letter}"`);
+        }
+        // Clean up canvas and references when tile is removed
+        const tileEl = tileElements.get(tileId);
+        if (tileEl) {
+          const canvas = tileEl.querySelector('canvas');
+          if (canvas) {
+            // Clear canvas to free memory
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            canvas.width = 0;
+            canvas.height = 0;
+          }
+          tileElements.delete(tileId);
+        }
+        // Remove from renderer cache
+        tileRenderers.delete(tileId);
+        grid[sel.row][sel.col] = null;
+      });
+    }
+
+    function applyGravity() {
+      // Clean up tileElements and tileRenderers for tiles that are moving
+      // Since tiles move down, we need to clear old positions
+      for (let c = 0; c < cols; c++) {
+        const stack = [];
+        for (let r = rows - 1; r >= 0; r--) {
+          if (grid[r][c]) stack.push(grid[r][c]);
+        }
+        let idx = 0;
+        for (let r = rows - 1; r >= 0; r--) {
+          const oldTileId = `${r}-${c}`;
+          const oldTile = grid[r][c];
+          grid[r][c] = stack[idx] || null;
+          const newTileId = `${r}-${c}`;
+          
+          // If position changed (tile moved), clean up old references
+          if (oldTile && oldTileId !== newTileId) {
+            // Clean up old position
+            tileElements.delete(oldTileId);
+            const oldRenderer = tileRenderers.get(oldTileId);
+            if (oldRenderer && oldRenderer.canvas) {
+              const ctx = oldRenderer.canvas.getContext('2d');
+              if (ctx) {
+                ctx.clearRect(0, 0, oldRenderer.canvas.width, oldRenderer.canvas.height);
+              }
+              oldRenderer.canvas.width = 0;
+              oldRenderer.canvas.height = 0;
+            }
+            tileRenderers.delete(oldTileId);
+          }
+          idx += 1;
+        }
+      }
+    }
+
+    function clearSelection(forceFullRender = false) {
+      selection = [];
+      renderGrid(forceFullRender);
+    }
+
+    function showFloatingWord(x, y) {
+      floatingWord.style.display = 'flex';
+      floatingWord.style.left = `${x}px`;
+      floatingWord.style.top = `${y}px`;
+    }
+
+    function hideFloatingWord() { floatingWord.style.display = 'none'; }
+
+    function updateFloatingWord(pos) {
+      const word = selectionWord();
+      floatingText.textContent = word;
+      if (word.length >= 3) {
+        floatingPoints.textContent = `+${wordScore(word)} pts`;
+        floatingWord.classList.remove('warning');
+      } else if (word.length === 2) {
+        floatingPoints.textContent = 'Need 1 more letter';
+        floatingWord.classList.add('warning');
+      } else {
+        floatingPoints.textContent = 'Need 3+ letters';
+        floatingWord.classList.remove('warning');
+      }
+    }
+
+    function addRow() {
+      const topHasTiles = grid[0] && grid[0].some(Boolean);
+      if (topHasTiles) {
+        endGame();
+        return;
+      }
+      // Shift all rows up
+      for (let r = 0; r < rows - 1; r++) {
+        grid[r] = grid[r + 1] || Array.from({ length: cols }, () => null);
+      }
+      // Create new row at the bottom with correct number of columns
+      const newRow = Array.from({ length: cols }, () => ({ 
+        letter: pickLetter(), 
+        id: `${Date.now()}-${Math.random()}` 
+      }));
+      grid[rows - 1] = newRow;
+      rowTimer = rowInterval;
+      rowsAdded += 1;
+      level = 1 + Math.floor(rowsAdded / 3);
+      renderGrid(true); // Force full render after row addition
+    }
+
+    function decayCombo(delta) {
+      const now = performance.now();
+      if (now - lastWordAt < 5000) return;
+      decayBuffer += delta;
+      while (decayBuffer >= 1 && combo > 1) {
+        combo = Math.max(1, parseFloat((combo - 0.1).toFixed(1)));
+        decayBuffer -= 1;
+      }
+    }
+
+    function animateScoreGain(points) {
+      // Add pop animation to score
+      headerScore.classList.add('score-pop');
+      setTimeout(() => {
+        headerScore.classList.remove('score-pop');
+      }, 600);
+      
+      // Create floating points indicator
+      const statItem = headerScore.closest('.stat-item');
+      if (statItem) {
+        const pointsGain = document.createElement('div');
+        pointsGain.className = 'points-gain';
+        pointsGain.textContent = `+${points}`;
+        statItem.style.position = 'relative';
+        statItem.appendChild(pointsGain);
+        
+        // Remove after animation
+        setTimeout(() => {
+          pointsGain.remove();
+        }, 1000);
+      }
+      
+      // Update score immediately
+      headerScore.textContent = score.toLocaleString();
+    }
+
+    function updateUI() {
+      headerScore.textContent = score.toLocaleString();
+      headerCombo.textContent = `x${combo.toFixed(1)}`;
+      headerTime.textContent = `${timeLeft.toFixed(1)}s`;
+      headerTime.className = timeLeft < 10 ? 'stat-value time-low' : 'stat-value time-positive';
+      headerRowTimer.textContent = `${rowTimer.toFixed(1)}s`;
+      headerLevel.textContent = level;
+    }
+
+    async function endGame() {
+      running = false;
+      paused = false;
+      gameOver.style.display = 'flex';
+      finalScore.textContent = score.toLocaleString();
+      finalCombo.textContent = `x${bestCombo.toFixed(1)}`;
+      finalLongest.textContent = longestWord || '-';
+      
+      // User should always exist at this point (registered at start)
+      if (currentUser) {
+        userSection.style.display = 'none';
+        const displayName = currentUser.displayname || currentUser.username;
+        userStatus.textContent = `Playing as: ${displayName}`;
+        leaderboardBtn.style.display = 'inline-block';
+        // Auto-submit score
+        submitScore(currentUser.id, {
+          score,
+          combo: bestCombo,
+          longestWord,
+          level,
+          wordsPlayed,
+        }).then(success => {
+          if (success) {
+            addToast('Score saved!', 'success');
+          }
+        });
+      } else {
+        // Fallback: shouldn't happen, but handle gracefully
+        userSection.style.display = 'block';
+        usernameInput.value = '';
+        userStatus.textContent = '';
+        leaderboardBtn.style.display = 'none';
+      }
+    }
+
+    function gameLoop(timestamp) {
+      if (!running) return;
+      if (!lastTime) lastTime = timestamp;
+      const delta = (timestamp - lastTime) / 1000;
+      lastTime = timestamp;
+      if (!paused) {
+        timeLeft -= delta;
+        // Only decrement row timer if user is not actively selecting
+        if (!dragging) {
+          rowTimer -= delta;
+        }
+        decayCombo(delta);
+        // Only add row if timer expired AND user is not dragging
+        if (rowTimer <= 0 && !dragging) {
+          addRow();
+        }
+        if (timeLeft <= 0) {
+          timeLeft = 0;
+          updateUI();
+          endGame();
+          return;
+        }
+        updateUI();
+      }
+      requestAnimationFrame(gameLoop);
+    }
+
+    function loadDictionary() {
+      return fetch('/words.txt')
+        .then(r => r.text())
+        .then(text => {
+          const words = text.split(/\r?\n/).map(w => w.trim()).filter(Boolean);
+          dictionary = new Set(words);
+        })
+        .catch(() => {
+          dictionary = new Set(fallbackWords);
+        });
+    }
+
+    function startGame(reset=false) {
+      if (reset) {
+        gameOver.style.display = 'none';
+      }
+      paused = false;
+      lastTime = null;
+      timeLeft = 60;
+      rowInterval = 7;
+      rowTimer = 7;
+      score = 0;
+      combo = 1.0;
+      bestCombo = 1.0;
+      longestWord = '';
+      lastWordAt = performance.now();
+      decayBuffer = 0;
+      level = 1;
+      rowsAdded = 0;
+      selection = [];
+      wordsPlayed = 0;
+      resetGrid();
+      renderGrid(true); // Force full render on reset
+      updateUI();
+      // Show start button instead of starting immediately
+      if (startOverlay) startOverlay.style.display = 'flex';
+      running = false; // Don't start running until button is clicked
+    }
+    
+    function actuallyStartGame() {
+      // Hide overlays and actually start the game loop
+      if (startOverlay) startOverlay.style.display = 'none';
+      if (countdownOverlay) countdownOverlay.style.display = 'none';
+      running = true;
+      requestAnimationFrame(gameLoop);
+    }
+    
+    function skipCountdown() {
+      // Cancel any ongoing countdown animation
+      if (countdownAnimationId) {
+        cancelAnimationFrame(countdownAnimationId);
+        countdownAnimationId = null;
+      }
+      
+      // Clean up Three.js resources
+      if (countdownMesh) {
+        if (countdownScene) countdownScene.remove(countdownMesh);
+        countdownMesh.geometry.dispose();
+        countdownMesh.material.dispose();
+        countdownMesh = null;
+      }
+      
+      if (countdownRenderer) {
+        countdownRenderer.dispose();
+        countdownRenderer = null;
+      }
+      
+      // Start the game immediately
+      actuallyStartGame();
+    }
+
+    function pauseGame() {
+      paused = !paused;
+      pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+    }
+
+    function clearAndReset() {
+      startGame(true);
+      // startGame already shows the start button and sets running = false
+    }
+    
+    let countdownScene = null;
+    let countdownCamera = null;
+    let countdownRenderer = null;
+    let countdownMesh = null;
+    let countdownAnimationId = null;
+    
+    function showCountdown() {
+      if (!countdownCanvas || !window.THREE) {
+        // Fallback if Three.js not loaded
+        actuallyStartGame();
+        return;
+      }
+      
+      countdownOverlay.style.display = 'flex';
+      
+      // Set canvas size
+      const rect = countdownCanvas.getBoundingClientRect();
+      countdownCanvas.width = rect.width * window.devicePixelRatio;
+      countdownCanvas.height = rect.height * window.devicePixelRatio;
+      
+      // Create scene
+      countdownScene = new THREE.Scene();
+      countdownCamera = new THREE.PerspectiveCamera(75, rect.width / rect.height, 0.1, 1000);
+      countdownRenderer = new THREE.WebGLRenderer({ canvas: countdownCanvas, alpha: true, antialias: true });
+      countdownRenderer.setSize(rect.width * window.devicePixelRatio, rect.height * window.devicePixelRatio);
+      countdownRenderer.setPixelRatio(window.devicePixelRatio);
+      
+      // Position camera
+      countdownCamera.position.z = 5;
+      
+      // Create text geometry (using a simple approach)
+      const countdownNumbers = [3, 2, 1];
+      let currentIndex = 0;
+      
+      function createCountdownText(number) {
+        // Clear previous mesh
+        if (countdownMesh) {
+          countdownScene.remove(countdownMesh);
+          countdownMesh.geometry.dispose();
+          countdownMesh.material.dispose();
+        }
+        
+        // Create canvas for text
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = '#22d3ee';
+        ctx.font = 'bold 400px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(number.toString(), 256, 256);
+        
+        // Create texture
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        
+        // Create material with glow effect
+        const material = new THREE.MeshBasicMaterial({
+          map: texture,
+          transparent: true,
+          color: 0x22d3ee,
+          emissive: 0x22d3ee,
+          emissiveIntensity: 1.5
+        });
+        
+        // Create plane
+        const geometry = new THREE.PlaneGeometry(3, 3);
+        countdownMesh = new THREE.Mesh(geometry, material);
+        countdownMesh.position.set(0, 0, 0);
+        countdownMesh.scale.set(1, 1, 1);
+        countdownScene.add(countdownMesh);
+      }
+      
+      function animateCountdown() {
+        if (currentIndex >= countdownNumbers.length) {
+          // Countdown complete
+          if (countdownAnimationId) {
+            cancelAnimationFrame(countdownAnimationId);
+          }
+          if (countdownMesh) {
+            countdownScene.remove(countdownMesh);
+            countdownMesh.geometry.dispose();
+            countdownMesh.material.dispose();
+          }
+          if (countdownRenderer) {
+            countdownRenderer.dispose();
+          }
+          actuallyStartGame();
+          return;
+        }
+        
+        const number = countdownNumbers[currentIndex];
+        createCountdownText(number);
+        
+        // Animate scale and rotation
+        const startTime = performance.now();
+        const duration = 1000; // 1 second per number
+        
+        function animate() {
+          const elapsed = performance.now() - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          
+          if (countdownMesh) {
+            // Scale animation: start big, shrink to normal, then fade
+            if (progress < 0.2) {
+              const scale = 1 + (1 - progress / 0.2) * 0.5; // Start at 1.5x
+              countdownMesh.scale.set(scale, scale, 1);
+              countdownMesh.material.opacity = 1;
+            } else if (progress < 0.8) {
+              countdownMesh.scale.set(1, 1, 1);
+              countdownMesh.material.opacity = 1;
+            } else {
+              const fadeProgress = (progress - 0.8) / 0.2;
+              countdownMesh.material.opacity = 1 - fadeProgress;
+              const scale = 1 + fadeProgress * 0.3;
+              countdownMesh.scale.set(scale, scale, 1);
+            }
+            
+            // Rotation animation
+            countdownMesh.rotation.z = Math.sin(progress * Math.PI * 2) * 0.1;
+          }
+          
+          countdownRenderer.render(countdownScene, countdownCamera);
+          
+          if (progress < 1) {
+            countdownAnimationId = requestAnimationFrame(animate);
+          } else {
+            // Move to next number
+            currentIndex++;
+            if (currentIndex < countdownNumbers.length) {
+              setTimeout(() => {
+                countdownAnimationId = requestAnimationFrame(animateCountdown);
+              }, 100);
+            } else {
+              // All numbers done
+              if (countdownMesh) {
+                countdownScene.remove(countdownMesh);
+                countdownMesh.geometry.dispose();
+                countdownMesh.material.dispose();
+              }
+              if (countdownRenderer) {
+                countdownRenderer.dispose();
+              }
+              actuallyStartGame();
+            }
+          }
+        }
+        
+        countdownAnimationId = requestAnimationFrame(animate);
+      }
+      
+      // Start countdown
+      animateCountdown();
+    }
+
+    function attachEvents() {
+      gridEl.addEventListener('pointerdown', e => {
+        const cell = e.target.closest('.cell');
+        if (!cell || !running || paused) return;
+        const row = Number(cell.dataset.row);
+        const col = Number(cell.dataset.col);
+        // Validate row and col are within bounds
+        if (row < 0 || row >= rows || col < 0 || col >= cols) return;
+        if (!grid[row] || !grid[row][col]) return;
+        dragging = true;
+        pointerId = e.pointerId;
+        const tile = grid[row][col];
+        if (!tile) return;
+        // Use letter directly from grid
+        selection = [{ row, col, letter: tile.letter }];
+        updateFloatingWord();
+        renderGrid(false); // Use incremental update
+        showFloatingWord(e.clientX, e.clientY - 20);
+      });
+
+      window.addEventListener('pointermove', e => {
+        if (!dragging || e.pointerId !== pointerId) return;
+        showFloatingWord(e.clientX, e.clientY - 20);
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        const cell = target && target.closest('.cell');
+        if (!cell) return;
+        const row = Number(cell.dataset.row);
+        const col = Number(cell.dataset.col);
+        // Validate row and col are within bounds
+        if (row < 0 || row >= rows || col < 0 || col >= cols) return;
+        handleSelection(row, col, e);
+      });
+
+      window.addEventListener('pointerup', e => {
+        if (!dragging || e.pointerId !== pointerId) return;
+        dragging = false;
+        pointerId = null;
+        submitSelection();
+      });
+
+      pauseBtn.addEventListener('click', () => {
+        if (!running) return;
+        pauseGame();
+      });
+
+      resetBtn.addEventListener('click', () => {
+        clearAndReset();
+      });
+
+
+      // Registration handlers
+      const registerForm = document.getElementById('registerForm');
+      registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault(); // Prevent default form submission
+        registerBtn.click(); // Trigger the existing registration logic
+      });
+      
+      registerBtn.addEventListener('click', async () => {
+        const username = registerUsernameInput.value.trim();
+        const password = registerPasswordInput.value;
+        const confirmPassword = registerConfirmPasswordInput.value;
+        
+        if (!username) {
+          registerStatus.textContent = 'Please enter a username';
+          registerStatus.style.color = '#ef4444';
+          return;
+        }
+        if (username.length < 2) {
+          registerStatus.textContent = 'Username must be at least 2 characters';
+          registerStatus.style.color = '#ef4444';
+          return;
+        }
+        if (username.length > 20) {
+          registerStatus.textContent = 'Username must be 20 characters or less';
+          registerStatus.style.color = '#ef4444';
+          return;
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+          registerStatus.textContent = 'Username can only contain letters, numbers, and underscores';
+          registerStatus.style.color = '#ef4444';
+          return;
+        }
+        if (!password) {
+          registerStatus.textContent = 'Please enter a password';
+          registerStatus.style.color = '#ef4444';
+          return;
+        }
+        if (password.length < 6) {
+          registerStatus.textContent = 'Password must be at least 6 characters';
+          registerStatus.style.color = '#ef4444';
+          return;
+        }
+        if (password !== confirmPassword) {
+          registerStatus.textContent = 'Passwords do not match';
+          registerStatus.style.color = '#ef4444';
+          return;
+        }
+        
+        // Final check: verify username is still available before submission
+        registerBtn.disabled = true;
+        registerBtn.textContent = 'Checking availability...';
+        registerStatus.textContent = 'Verifying username availability...';
+        registerStatus.style.color = '#94a3b8';
+        
+        const isAvailable = await checkUsernameAvailability(username);
+        if (!isAvailable) {
+          registerStatus.textContent = '✗ Username is already taken. Please choose another.';
+          registerStatus.style.color = '#ef4444';
+          registerBtn.disabled = false;
+          registerBtn.textContent = 'Create Account';
+          return;
+        }
+        
+        registerBtn.textContent = 'Creating account...';
+        registerStatus.textContent = '';
+        
+        try {
+          const user = await getOrCreateUser(username, password);
+          if (user) {
+            currentUser = user;
+            updateUserBadge();
+            // Reload the page to trigger Safari password save prompt
+            window.location.reload();
+          } else {
+            registerStatus.textContent = 'Failed to create account. Please try again.';
+            registerStatus.style.color = '#ef4444';
+            registerBtn.disabled = false;
+            registerBtn.textContent = 'Start Playing';
+          }
+        } catch (error) {
+          if (error.message === 'Username already taken') {
+            registerStatus.textContent = 'Username is already taken. Please choose another.';
+            registerStatus.style.color = '#ef4444';
+          } else {
+            registerStatus.textContent = 'Failed to create account. Please try again.';
+            registerStatus.style.color = '#ef4444';
+          }
+          registerBtn.disabled = false;
+          registerBtn.textContent = 'Start Playing';
+        }
+      });
+      
+      registerUsernameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          registerPasswordInput.focus();
+        }
+      });
+      
+      registerPasswordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          registerConfirmPasswordInput.focus();
+        }
+      });
+      
+      registerConfirmPasswordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          registerBtn.click();
+        }
+      });
+      
+      // Real-time username availability checking (debounced)
+      let usernameCheckTimeout = null;
+      registerUsernameInput.addEventListener('input', async () => {
+        registerStatus.textContent = '';
+        
+        const username = registerUsernameInput.value.trim();
+        
+        // Clear previous timeout
+        if (usernameCheckTimeout) {
+          clearTimeout(usernameCheckTimeout);
+        }
+        
+        // Basic validation first
+        if (!username) {
+          return;
+        }
+        if (username.length < 2) {
+          registerStatus.textContent = 'Username must be at least 2 characters';
+          registerStatus.style.color = '#f59e0b';
+          return;
+        }
+        if (username.length > 20) {
+          registerStatus.textContent = 'Username must be 20 characters or less';
+          registerStatus.style.color = '#ef4444';
+          return;
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+          registerStatus.textContent = 'Username can only contain letters, numbers, and underscores';
+          registerStatus.style.color = '#ef4444';
+          return;
+        }
+        
+        // Debounce the API call
+        usernameCheckTimeout = setTimeout(async () => {
+          registerStatus.textContent = 'Checking availability...';
+          registerStatus.style.color = '#94a3b8';
+          
+          const available = await checkUsernameAvailability(username);
+          if (available) {
+            registerStatus.textContent = '✓ Username available';
+            registerStatus.style.color = '#22c55e';
+          } else {
+            registerStatus.textContent = '✗ Username already taken';
+            registerStatus.style.color = '#ef4444';
+          }
+        }, 500); // Wait 500ms after user stops typing
+      });
+
+      startBtn.addEventListener('click', () => {
+        tutorial.style.display = 'none';
+        localStorage.setItem('lexistack_tutorial_seen', '1');
+        clearAndReset();
+      });
+      
+      // Start button click handler
+      if (startButton) {
+        startButton.addEventListener('click', () => {
+          showCountdown();
+        });
+      }
+      
+      // Countdown overlay click handler - tap to skip
+      if (countdownOverlay) {
+        countdownOverlay.addEventListener('click', () => {
+          skipCountdown();
+        });
+      }
+
+      againBtn.addEventListener('click', () => {
+        clearAndReset();
+        // Show start button
+        if (startOverlay) startOverlay.style.display = 'flex';
+      });
+      homeBtn.addEventListener('click', () => {
+        gameOver.style.display = 'none';
+        tutorial.style.display = 'flex';
+      });
+      
+      saveScoreBtn.addEventListener('click', async () => {
+        const username = usernameInput.value.trim();
+        if (!username) {
+          addToast('Please enter a username', 'error');
+          return;
+        }
+        if (username.length > 20) {
+          addToast('Username must be 20 characters or less', 'error');
+          return;
+        }
+         saveScoreBtn.disabled = true;
+         saveScoreBtn.textContent = 'Saving...';
+         try {
+           const user = await getOrCreateUser(username, null, currentUser?.id);
+           if (user) {
+             currentUser = user;
+             updateUserBadge();
+             userSection.style.display = 'none';
+             const displayName = user.displayname || user.username;
+            userStatus.textContent = `Playing as: ${displayName}`;
+             leaderboardBtn.style.display = 'inline-block';
+             // Submit score
+             const success = await submitScore(user.id, {
+               score,
+               combo: bestCombo,
+               longestWord,
+               level,
+               wordsPlayed,
+             });
+             if (success) {
+               addToast('Score saved!', 'success');
+             }
+           } else {
+             addToast('Failed to save. Please try again.', 'error');
+             saveScoreBtn.disabled = false;
+             saveScoreBtn.textContent = 'Save';
+           }
+         } catch (error) {
+           if (error.message === 'Username already taken') {
+             addToast('Username is already taken. Please choose another.', 'error');
+           } else {
+             addToast('Failed to save. Please try again.', 'error');
+           }
+           saveScoreBtn.disabled = false;
+           saveScoreBtn.textContent = 'Save';
+         }
+      });
+      
+      usernameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          saveScoreBtn.click();
+        }
+      });
+      
+      leaderboardBtn.addEventListener('click', async () => {
+        leaderboardModal.style.display = 'flex';
+        leaderboardList.innerHTML = '<div style="text-align: center; padding: 20px; color: #94a3b8;">Loading...</div>';
+        const scores = await getLeaderboard(10);
+        if (scores.length === 0) {
+          leaderboardList.innerHTML = '<div style="text-align: center; padding: 20px; color: #94a3b8;">No scores yet. Be the first!</div>';
+        } else {
+          leaderboardList.innerHTML = scores.map((s, i) => {
+            // Format combo to 1 decimal place to avoid floating point precision issues
+            const formattedCombo = parseFloat(s.combo).toFixed(1);
+            return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 8px; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid rgba(148,163,184,0.2);">
+              <div>
+                <div style="font-weight: 700; color: #e2e8f0;">#${i + 1} ${s.username}</div>
+                <div style="font-size: 0.85rem; color: #94a3b8;">Level ${s.level} • ${s.words_played} words • Combo x${formattedCombo}</div>
+              </div>
+              <div style="font-size: 1.2rem; font-weight: 800; color: var(--cyan);">${s.score.toLocaleString()}</div>
+            </div>
+          `;
+          }).join('');
+        }
+      });
+      
+      closeLeaderboardBtn.addEventListener('click', () => {
+        leaderboardModal.style.display = 'none';
+      });
+      
+      // Settings modal handlers
+      userBadge.addEventListener('click', () => {
+        if (currentUser) {
+          openSettingsModal();
+        }
+      });
+      
+      settingsCancelBtn.addEventListener('click', () => {
+        closeSettingsModal();
+      });
+      
+      settingsLogoutBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to log out? Your current game progress will be lost.')) {
+          // Clear user data
+          currentUser = null;
+          localStorage.removeItem('lexistack_user');
+          
+          // Reset game state
+          running = false;
+          paused = false;
+          
+          // Hide game over and tutorial
+          gameOver.style.display = 'none';
+          tutorial.style.display = 'none';
+          
+          // Close settings modal
+          closeSettingsModal();
+          
+          // Update UI
+          updateUserBadge();
+          
+          // Show registration modal
+          registerModal.style.display = 'flex';
+          prefillRegistrationForm();
+          registerUsernameInput.focus();
+          
+          addToast('Logged out successfully', 'success');
+        }
+      });
+      
+      regenerateUsernameBtn.addEventListener('click', () => {
+        registerUsernameInput.value = generateUsername();
+        registerStatus.textContent = '';
+      });
+      
+      regeneratePasswordBtn.addEventListener('click', () => {
+        const newPassword = generatePassword();
+        registerPasswordInput.value = newPassword;
+        registerConfirmPasswordInput.value = newPassword;
+        registerStatus.textContent = '';
+      });
+      
+      viewLeaderboardBtn.addEventListener('click', () => {
+        closeSettingsModal();
+        leaderboardBtn.click();
+      });
+      
+      settingsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await saveSettings();
+      });
+      
+      settingsSaveBtn.addEventListener('click', async () => {
+        await saveSettings();
+      });
+    }
+    
+    async function saveSettings() {
+      if (!currentUser) return;
+      
+      const displayname = settingsDisplayName.value.trim();
+      const newPassword = settingsNewPassword.value;
+      const confirmPassword = settingsConfirmPassword.value;
+      const currentPassword = settingsCurrentPassword.value;
+      
+      // Validate displayname
+      if (!displayname) {
+        settingsStatus.textContent = 'Display name cannot be empty';
+        settingsStatus.style.color = '#ef4444';
+        return;
+      }
+      if (displayname.length > 30) {
+        settingsStatus.textContent = 'Display name must be 30 characters or less';
+        settingsStatus.style.color = '#ef4444';
+        return;
+      }
+      
+      // Validate password if provided
+      if (newPassword) {
+        if (newPassword.length < 6) {
+          settingsStatus.textContent = 'New password must be at least 6 characters';
+          settingsStatus.style.color = '#ef4444';
+          return;
+        }
+        if (newPassword !== confirmPassword) {
+          settingsStatus.textContent = 'New passwords do not match';
+          settingsStatus.style.color = '#ef4444';
+          return;
+        }
+        if (!currentPassword) {
+          settingsStatus.textContent = 'Current password required to change password';
+          settingsStatus.style.color = '#ef4444';
+          return;
+        }
+      }
+      
+      settingsSaveBtn.disabled = true;
+      settingsSaveBtn.textContent = 'Saving...';
+      settingsStatus.textContent = '';
+      
+      try {
+        const updates = { displayname };
+        if (newPassword) {
+          updates.password = newPassword;
+          updates.currentPassword = currentPassword;
+        }
+        
+        const updatedUser = await updateUser(currentUser.id, updates);
+        if (updatedUser) {
+          currentUser = updatedUser;
+          updateUserBadge();
+          settingsStatus.textContent = 'Settings saved successfully!';
+          settingsStatus.style.color = '#22c55e';
+          
+          // Clear password fields
+          settingsCurrentPassword.value = '';
+          settingsNewPassword.value = '';
+          settingsConfirmPassword.value = '';
+          
+          setTimeout(() => {
+            closeSettingsModal();
+          }, 1500);
+        }
+      } catch (error) {
+        settingsStatus.textContent = error.message || 'Failed to save settings. Please try again.';
+        settingsStatus.style.color = '#ef4444';
+      } finally {
+        settingsSaveBtn.disabled = false;
+        settingsSaveBtn.textContent = 'Save Changes';
+      }
+    }
+
+    async function getUserRank(userId) {
+      try {
+        // Get all scores sorted by score descending
+        const allScores = await getAllScores();
+        
+        if (allScores.length === 0) {
+          return null; // No scores in leaderboard
+        }
+        
+        // Find user's best score
+        const userScores = allScores.filter(s => s.user_id === userId);
+        if (userScores.length === 0) {
+          return null; // User has no scores
+        }
+        
+        const userBestScore = Math.max(...userScores.map(s => s.score));
+        
+        // Count how many unique users have a better score
+        const uniqueUserScores = new Map();
+        for (const score of allScores) {
+          const currentBest = uniqueUserScores.get(score.user_id) || 0;
+          if (score.score > currentBest) {
+            uniqueUserScores.set(score.user_id, score.score);
+          }
+        }
+        
+        // Count users with better scores
+        let rank = 1;
+        for (const [uid, bestScore] of uniqueUserScores.entries()) {
+          if (uid !== userId && bestScore > userBestScore) {
+            rank++;
+          }
+        }
+        
+        return rank;
+      } catch (error) {
+        console.error('Error getting user rank:', error);
+        return null;
+      }
+    }
+    
+    function updateUserBadge() {
+      if (currentUser) {
+        const displayName = currentUser.displayname || currentUser.username;
+        userBadge.textContent = displayName;
+        userBadge.style.display = 'inline';
+      } else {
+        userBadge.style.display = 'none';
+      }
+    }
+    
+    async function openSettingsModal() {
+      if (!currentUser) return;
+      
+      const displayName = currentUser.displayname || currentUser.username;
+      settingsDisplayName.value = displayName;
+      settingsUsernameDisplay.value = currentUser.username;
+      settingsCurrentPassword.value = '';
+      settingsNewPassword.value = '';
+      settingsConfirmPassword.value = '';
+      settingsStatus.textContent = '';
+      
+      // Get and display user rank
+      userRank.textContent = 'Loading...';
+      const rank = await getUserRank(currentUser.id);
+      if (rank !== null) {
+        userRank.textContent = `#${rank}`;
+      } else {
+        userRank.textContent = 'No rank yet';
+      }
+      
+      settingsModal.style.display = 'flex';
+      settingsDisplayName.focus();
+    }
+    
+    function closeSettingsModal() {
+      settingsModal.style.display = 'none';
+      settingsDisplayName.value = '';
+      settingsCurrentPassword.value = '';
+      settingsNewPassword.value = '';
+      settingsConfirmPassword.value = '';
+      settingsStatus.textContent = '';
+    }
+    
+    function prefillRegistrationForm() {
+      // Auto-generate username only (password left empty for Safari password saver)
+      const username = generateUsername();
+      registerUsernameInput.value = username;
+      registerPasswordInput.value = '';
+      registerConfirmPasswordInput.value = '';
+      registerStatus.textContent = '';
+    }
+    
+
+    async function init() {
+      attachEvents();
+      loadDictionary();
+      
+      // Check if user exists
+      const storedUser = loadUserFromStorage();
+      if (storedUser) {
+        currentUser = storedUser;
+        updateUserBadge();
+      // User exists, start game directly (tutorial can be accessed via button)
+      clearAndReset();
+      } else {
+        // No user, show registration first
+        registerModal.style.display = 'flex';
+        prefillRegistrationForm();
+        registerUsernameInput.focus();
+      }
+    }
+
+    window.addEventListener('resize', drawPath);
+    init();
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</body>
+</html>

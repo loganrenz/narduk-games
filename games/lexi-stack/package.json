@@ -1,0 +1,32 @@
+{
+  "name": "lexi-stack",
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "deploy:worker": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply ca89b569-ca31-4c0b-8db1-c62540d9e65a --remote",
+    "db:migrate:local": "wrangler d1 migrations apply ca89b569-ca31-4c0b-8db1-c62540d9e65a --local",
+    "db:create": "wrangler d1 execute ca89b569-ca31-4c0b-8db1-c62540d9e65a --file=./migrations/0001_initial_schema.sql --remote",
+    "db:create:local": "wrangler d1 execute ca89b569-ca31-4c0b-8db1-c62540d9e65a --file=./migrations/0001_initial_schema.sql --local"
+  },
+  "devDependencies": {
+    "@vitest/ui": "^4.0.15",
+    "vitest": "^4.0.15",
+    "wrangler": "^4.53.0"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "^6.0.2",
+    "generate-password": "^1.7.1",
+    "three": "^0.181.2",
+    "unique-names-generator": "^4.7.1",
+    "vite": "^7.2.7",
+    "vue": "^3.5.25"
+  }
+}

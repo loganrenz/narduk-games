@@ -1,0 +1,27 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "name": "narduk-games",
+  "builds": [
+    {
+      "src": "games/lexi-stack/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "games/lexi-stack/dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/lexi-stack/(.*)",
+      "dest": "/games/lexi-stack/dist/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
+    }
+  ],
+  "github": {
+    "silent": true
+  }
+}
