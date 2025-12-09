@@ -86,7 +86,7 @@
       ]
     },
     {
-      "source": "/(.*)",
+      "source": "/",
       "destination": "/index.html",
       "has": [
         {
