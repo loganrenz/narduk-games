@@ -2,139 +2,300 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Narduk Games</title>
     <meta name="description" content="A collection of web games by Narduk">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --bg-card-hover: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #6b6b6b;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-success: #10b981;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+            animation: gradientShift 20s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
 
         .container {
-            max-width: 1200px;
-            width: 100%;
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: clamp(24px, 5vw, 48px) clamp(16px, 4vw, 32px);
         }
 
+        /* Header */
         header {
             text-align: center;
-            margin-bottom: 60px;
-            color: white;
+            margin-bottom: clamp(40px, 8vw, 80px);
+            padding-top: clamp(20px, 4vw, 40px);
         }
 
-        h1 {
-            font-size: 4rem;
+        .logo {
+            font-size: clamp(2rem, 5vw, 3.5rem);
             font-weight: 800;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
         }
 
         .tagline {
-            font-size: 1.5rem;
-            opacity: 0.9;
+            font-size: clamp(0.95rem, 2vw, 1.125rem);
+            color: var(--text-secondary);
+            font-weight: 400;
+            letter-spacing: 0.01em;
         }
 
+        /* Games Grid */
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-bottom: 60px;
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+            gap: clamp(20px, 4vw, 24px);
+            margin-bottom: clamp(48px, 8vw, 80px);
         }
 
         .game-card {
-            background: white;
-            border-radius: 16px;
-            padding: 40px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: clamp(24px, 5vw, 32px);
             text-decoration: none;
-            color: #333;
+            color: inherit;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .game-card:hover::before {
+            opacity: 1;
         }
 
         .game-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            transform: translateY(-4px);
+            background: var(--bg-card-hover);
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .game-card:active {
+            transform: translateY(-2px);
+        }
+
+        .game-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 16px;
         }
 
         .game-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
+            font-size: clamp(2.5rem, 5vw, 3rem);
+            line-height: 1;
+            filter: grayscale(0.3);
+            transition: filter 0.3s ease;
         }
 
-        .game-card h2 {
-            font-size: 2rem;
-            margin-bottom: 15px;
-            color: #667eea;
-        }
-
-        .game-card p {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            color: #666;
-            margin-bottom: 20px;
+        .game-card:hover .game-icon {
+            filter: grayscale(0);
         }
 
         .game-status {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
             font-weight: 600;
-            margin-top: auto;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: var(--accent-success);
+            color: #000;
+            white-space: nowrap;
         }
 
-        .status-live {
-            background: #10b981;
-            color: white;
+        .game-status::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s ease infinite;
         }
 
-        .status-coming-soon {
-            background: #f59e0b;
-            color: white;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
+        .game-title {
+            font-size: clamp(1.25rem, 3vw, 1.5rem);
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+
+        .game-description {
+            font-size: clamp(0.875rem, 2vw, 0.9375rem);
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: auto;
+            flex-grow: 1;
+        }
+
+        /* Footer */
         footer {
             text-align: center;
-            color: white;
-            opacity: 0.8;
+            padding: clamp(32px, 6vw, 48px) 0;
+            border-top: 1px solid var(--border-color);
+            margin-top: clamp(32px, 6vw, 64px);
+        }
+
+        footer p {
+            color: var(--text-muted);
+            font-size: clamp(0.875rem, 2vw, 0.9375rem);
+            margin-bottom: 12px;
         }
 
         footer a {
-            color: white;
+            color: var(--text-secondary);
             text-decoration: none;
-            font-weight: 600;
+            font-weight: 500;
+            transition: color 0.2s ease;
         }
 
         footer a:hover {
-            text-decoration: underline;
+            color: var(--text-primary);
         }
 
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2.5rem;
-            }
-
-            .tagline {
-                font-size: 1.2rem;
-            }
-
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
             .games-grid {
                 grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .game-card {
+                padding: 24px;
+            }
+
+            .game-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .game-status {
+                align-self: flex-start;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            header {
+                margin-bottom: 32px;
+            }
+
+            .game-card {
+                border-radius: 16px;
+                padding: 20px;
+            }
+        }
+
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .game-card:hover {
+                transform: none;
+            }
+
+            .game-card:active {
+                transform: scale(0.98);
+            }
+        }
+
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
             }
         }
     </style>
@@ -142,34 +303,53 @@
 <body>
     <div class="container">
         <header>
-            <h1>🎮 Narduk Games</h1>
-            <p class="tagline">Play fun games, challenge your mind</p>
+            <h1 class="logo">narduk games</h1>
+            <p class="tagline">play. challenge. repeat.</p>
         </header>
 
         <div class="games-grid">
             <a href="/lexistack" class="game-card">
-                <div class="game-icon">📚</div>
-                <h2>Lexi-Stack</h2>
-                <p>Stack words and challenge your vocabulary in this addictive word puzzle game!</p>
-                <span class="game-status status-live">🎮 Play Now</span>
+                <div class="game-header">
+                    <div class="game-icon">📚</div>
+                    <span class="game-status">Live</span>
+                </div>
+                <h2 class="game-title">Lexi-Stack</h2>
+                <p class="game-description">
+                    Form words by connecting adjacent tiles in this fast-paced word puzzle. Manage your time and keep the tower from overflowing.
+                </p>
             </a>
 
             <a href="/wordle" class="game-card">
-                <div class="game-icon">🔤</div>
-                <h2>Wordle Clone</h2>
-                <p>Guess the word in 6 tries! A classic word-guessing game with daily challenges.</p>
-                <span class="game-status status-live">🎮 Play Now</span>
+                <div class="game-header">
+                    <div class="game-icon">🔤</div>
+                    <span class="game-status">Live</span>
+                </div>
+                <h2 class="game-title">Wordle</h2>
+                <p class="game-description">
+                    Guess the five-letter word in six tries. Daily challenges with beautiful 3D animations and smooth gameplay.
+                </p>
+            </a>
+
+            <a href="/stack-balance" class="game-card">
+                <div class="game-header">
+                    <div class="game-icon">📦</div>
+                    <span class="game-status">Live</span>
+                </div>
+                <h2 class="game-title">Stack & Balance</h2>
+                <p class="game-description">
+                    Build the tallest tower possible. Physics-based stacking game with intuitive touch controls, perfect for mobile.
+                </p>
             </a>
         </div>
 
         <footer>
             <p>
-                Made with ❤️ by 
+                made by 
                 <a href="https://github.com/loganrenz" target="_blank" rel="noopener noreferrer">loganrenz</a>
             </p>
-            <p style="margin-top: 10px; font-size: 0.9rem;">
+            <p>
                 <a href="https://github.com/loganrenz/narduk-games" target="_blank" rel="noopener noreferrer">
-                    View on GitHub →
+                    view on github
                 </a>
             </p>
         </footer>

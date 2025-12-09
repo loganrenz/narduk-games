@@ -6,9 +6,8 @@ A monorepo containing all games by Narduk.
 
 ### Live Games
 - **[Lexi-Stack](./games/lexi-stack)** - A word-stacking puzzle game
-
-### In Development
-- **[Wordle Clone](./games/wordle-clone)** - A Wordle-inspired word guessing game (coming soon)
+- **[Wordle Clone](./games/wordle-clone)** - A Wordle-inspired word guessing game
+- **[Stack & Balance](./games/stack-balance)** - A physics-based stacking game
 
 ## 🏗️ Monorepo Structure
 
@@ -17,6 +16,7 @@ narduk-games/
 ├── games/
 │   ├── lexi-stack/         # Lexi-Stack game
 │   ├── wordle-clone/       # Wordle clone game
+│   ├── stack-balance/      # Stack & Balance game
 │   └── [future-game]/      # Add new games here
 ├── shared/                 # Shared utilities and components
 ├── package.json            # Root package.json with workspace scripts
@@ -50,12 +50,14 @@ npm run install:wordle-clone
 ```bash
 npm run lexi-stack:dev
 npm run wordle-clone:dev
+npm run stack-balance:dev
 ```
 
 ### Build a specific game
 ```bash
 npm run lexi-stack:build
 npm run wordle-clone:build
+npm run stack-balance:build
 ```
 
 ### Build all games
@@ -67,6 +69,7 @@ npm run build:all
 ```bash
 npm run lexi-stack:test
 npm run wordle-clone:test
+npm run stack-balance:test
 npm run test:all
 ```
 
@@ -81,7 +84,8 @@ This monorepo is designed to work with:
 Each component is deployed separately:
 - **Landing Page** (`narduk.games`): Deployed from root directory
 - **Lexi-Stack** (`lexi-stack.narduk.games`): Deployed from `games/lexi-stack`
-- **Wordle Clone** (coming soon): Deployed from `games/wordle-clone`
+- **Wordle Clone** (`wordle.narduk.games`): Deployed from `games/wordle-clone`
+- **Stack & Balance** (`stack-balance.narduk.games`): Deployed from `games/stack-balance`
 
 ### Quick Deploy
 

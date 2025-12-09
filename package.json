@@ -14,12 +14,17 @@
     "wordle-clone:build": "cd games/wordle-clone && npm run build",
     "wordle-clone:build:subdir": "cd games/wordle-clone && VITE_BASE_PATH=/wordle/ npm run build",
     "wordle-clone:test": "cd games/wordle-clone && npm run test",
-    "install:all": "npm run install:lexi-stack && npm run install:wordle-clone",
+    "stack-balance:dev": "cd games/stack-balance && npm run dev",
+    "stack-balance:build": "cd games/stack-balance && npm run build",
+    "stack-balance:build:subdir": "cd games/stack-balance && VITE_BASE_PATH=/stack-balance/ npm run build",
+    "stack-balance:test": "cd games/stack-balance && npm run test",
+    "install:all": "npm run install:lexi-stack && npm run install:wordle-clone && npm run install:stack-balance",
     "install:lexi-stack": "cd games/lexi-stack && npm install",
     "install:wordle-clone": "cd games/wordle-clone && npm install",
-    "build:all": "npm run lexi-stack:build && npm run wordle-clone:build",
-    "build:all:subdir": "npm run lexi-stack:build:subdir && npm run wordle-clone:build:subdir",
-    "test:all": "npm run lexi-stack:test && npm run wordle-clone:test"
+    "install:stack-balance": "cd games/stack-balance && npm install",
+    "build:all": "npm run lexi-stack:build && npm run wordle-clone:build && npm run stack-balance:build",
+    "build:all:subdir": "npm run lexi-stack:build:subdir && npm run wordle-clone:build:subdir && npm run stack-balance:build:subdir",
+    "test:all": "npm run lexi-stack:test && npm run wordle-clone:test && npm run stack-balance:test"
   },
   "repository": {
     "type": "git",

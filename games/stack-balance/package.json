@@ -1,0 +1,20 @@
+{
+  "name": "stack-balance",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d": "^0.19.3",
+    "@vitejs/plugin-vue": "^6.0.2",
+    "three": "^0.181.2",
+    "vite": "^7.2.7",
+    "vue": "^3.5.25"
+  },
+  "devDependencies": {
+    "vite-plugin-wasm": "^3.5.0"
+  }
+}
