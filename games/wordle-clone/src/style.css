@@ -32,6 +32,8 @@ body {
   overflow-x: hidden;
   display: flex;
   justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
 }
 
 #app {
@@ -202,6 +204,7 @@ button:active {
   gap: 8px;
   padding: 16px;
   background: transparent;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 .keyboard-row {
@@ -226,6 +229,8 @@ button:active {
   transition: background-color 0.15s ease;
   font-family: inherit;
   text-transform: uppercase;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .key:hover {
