@@ -76,8 +76,8 @@
       ]
     },
     {
-      "source": "/(.*)",
-      "destination": "/games/wordle-clone/dist/wordle/$1",
+      "source": "/wordle/(.*)",
+      "destination": "/games/wordle-clone/dist/$1",
       "has": [
         {
           "type": "host",
@@ -87,7 +87,7 @@
     },
     {
       "source": "/",
-      "destination": "/games/wordle-clone/dist/wordle/index.html",
+      "destination": "/games/wordle-clone/dist/index.html",
       "has": [
         {
           "type": "host",
