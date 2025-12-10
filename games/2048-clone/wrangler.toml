@@ -1,0 +1,22 @@
+name = "2048-clone-api"
+main = "src/worker.js"
+compatibility_date = "2024-01-01"
+
+# Game data database (scores, stats, etc.)
+[[d1_databases]]
+binding = "DB"
+database_name = "2048-clone-data"
+database_id = "15db38d8-b9ae-4acd-a1b5-83ef4ac4cb98"
+
+# Auth API URL for user validation
+vars = { AUTH_API_URL = "https://narduk-games-auth-api.narduk.workers.dev" }
+
+[env.production]
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "2048-clone-data"
+database_id = "15db38d8-b9ae-4acd-a1b5-83ef4ac4cb98"
+
+[env.production.vars]
+AUTH_API_URL = "https://narduk-games-auth-api.narduk.workers.dev"
+
