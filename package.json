@@ -22,14 +22,19 @@
     "potprefix:build": "cd games/potprefix && npm run build",
     "potprefix:build:subdir": "cd games/potprefix && VITE_BASE_PATH=/potprefix/ npm run build",
     "potprefix:test": "cd games/potprefix && npm run test",
-    "install:all": "npm run install:lexi-stack && npm run install:wordle-clone && npm run install:stack-balance && npm run install:potprefix",
+    "tapweave:dev": "cd games/tapweave && npm run dev",
+    "tapweave:build": "cd games/tapweave && npm run build",
+    "tapweave:build:subdir": "cd games/tapweave && VITE_BASE_PATH=/tapweave/ npm run build",
+    "tapweave:test": "cd games/tapweave && npm run test",
+    "install:all": "npm run install:lexi-stack && npm run install:wordle-clone && npm run install:stack-balance && npm run install:potprefix && npm run install:tapweave",
     "install:lexi-stack": "cd games/lexi-stack && npm install",
     "install:wordle-clone": "cd games/wordle-clone && npm install",
     "install:stack-balance": "cd games/stack-balance && npm install",
     "install:potprefix": "cd games/potprefix && npm install",
-    "build:all": "npm run lexi-stack:build && npm run wordle-clone:build && npm run stack-balance:build && npm run potprefix:build",
-    "build:all:subdir": "npm run lexi-stack:build:subdir && npm run wordle-clone:build:subdir && npm run stack-balance:build:subdir && npm run potprefix:build:subdir",
-    "test:all": "npm run lexi-stack:test && npm run wordle-clone:test && npm run stack-balance:test && npm run potprefix:test"
+    "install:tapweave": "cd games/tapweave && npm install",
+    "build:all": "npm run lexi-stack:build && npm run wordle-clone:build && npm run stack-balance:build && npm run potprefix:build && npm run tapweave:build",
+    "build:all:subdir": "npm run lexi-stack:build:subdir && npm run wordle-clone:build:subdir && npm run stack-balance:build:subdir && npm run potprefix:build:subdir && npm run tapweave:build:subdir",
+    "test:all": "npm run lexi-stack:test && npm run wordle-clone:test && npm run stack-balance:test && npm run potprefix:test && npm run tapweave:test"
   },
   "repository": {
     "type": "git",

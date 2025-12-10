@@ -96,6 +96,26 @@
       ]
     },
     {
+      "source": "/tapweave/(.*)",
+      "destination": "/games/tapweave/dist/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/tapweave",
+      "destination": "/games/tapweave/dist/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "destination": "/games/lexi-stack/dist/$1",
       "has": [
@@ -152,6 +172,26 @@
         {
           "type": "host",
           "value": "potprefix.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/games/tapweave/dist/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "tapweave.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/",
+      "destination": "/games/tapweave/dist/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "tapweave.nard.uk"
         }
       ]
     },
