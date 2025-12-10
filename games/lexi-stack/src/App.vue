@@ -57,7 +57,14 @@
       </div>
     </div>
 
-    <div class="overlay" v-if="showTutorial">
+    <div class="overlay" v-if="!dictionaryLoaded">
+      <div class="modal">
+        <h2>Loading Dictionary...</h2>
+        <p>Please wait while we load the word dictionary.</p>
+      </div>
+    </div>
+
+    <div class="overlay" v-if="showTutorial && dictionaryLoaded">
       <div class="modal">
         <h2>How to Play</h2>
         <ul>
@@ -130,6 +137,7 @@ const floatingWordStyle = ref({ left: '0px', top: '0px' })
 const selectionWord = ref('')
 const floatingPoints = ref('')
 const toasts = ref([])
+const dictionaryLoaded = ref(false)
 
 let dictionary = new Set(fallbackWords)
 let grid = []
@@ -354,9 +362,14 @@ function wordScore(word) {
 }
 
 function validateWord(word) {
+  console.log('[VALIDATE] Word:', word, 'Dictionary size:', dictionary.size, 'Has word:', dictionary.has(word))
   if (word.length < 2 || word.length > 8) return false
   if (!/^[A-Z]+$/.test(word)) return false
-  return dictionary.has(word)
+  const result = dictionary.has(word)
+  if (!result) {
+    console.log('[VALIDATE] Word not found in dictionary:', word)
+  }
+  return result
 }
 
 function submitSelection() {
@@ -523,24 +536,25 @@ function gameLoop(timestamp) {
   animationFrameId = requestAnimationFrame(gameLoop)
 }
 
-function loadDictionary() {
-  return fetch('/dictionary.json')
-    .then(r => r.json())
-    .then(data => {
-      const words = Object.keys(data).map(w => w.toUpperCase())
+async function loadDictionary() {
+  try {
+    const response = await fetch('/dictionary.json')
+    const data = await response.json()
+    const words = Object.keys(data).map(w => w.toUpperCase())
+    dictionary = new Set(words)
+    dictionaryLoaded.value = true
+  } catch (error) {
+    try {
+      const response = await fetch('/words.txt')
+      const text = await response.text()
+      const words = text.split(/\r?\n/).map(w => w.trim()).filter(Boolean)
       dictionary = new Set(words)
-    })
-    .catch(() => {
-      return fetch('/words.txt')
-        .then(r => r.text())
-        .then(text => {
-          const words = text.split(/\r?\n/).map(w => w.trim()).filter(Boolean)
-          dictionary = new Set(words)
-        })
-        .catch(() => {
-          dictionary = new Set(fallbackWords)
-        })
-    })
+      dictionaryLoaded.value = true
+    } catch (error2) {
+      dictionary = new Set(fallbackWords)
+      dictionaryLoaded.value = true
+    }
+  }
 }
 
 function startGame() {
@@ -629,14 +643,14 @@ function attachEvents() {
   window.addEventListener('resize', drawPath)
 }
 
-onMounted(() => {
+onMounted(async () => {
+  attachEvents()
+  await loadDictionary()
   if (!localStorage.getItem('lexistack_tutorial_seen')) {
     showTutorial.value = true
   } else {
     startGame()
   }
-  attachEvents()
-  loadDictionary()
 })
 
 onUnmounted(() => {
