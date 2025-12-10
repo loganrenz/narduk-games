@@ -21,7 +21,7 @@ export const usePotStore = defineStore('potprefix', () => {
     if (selectedLetter.value && rareLetters.has(selectedLetter.value.toUpperCase())) {
       base *= 1.5
     }
-    if (chainLength.value >= 9) {
+    if (chainLength.value >= 10) {
       base *= 10
     }
     return Number(base.toFixed(2))
