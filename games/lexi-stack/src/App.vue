@@ -171,11 +171,12 @@ function createThreeJSText(letter, isHigh, isSelected, container) {
   const rect = container.getBoundingClientRect()
   const width = rect.width || 100
   const height = rect.height || 100
-  
+  const size = Math.min(width, height)
+
   const scene = new THREE.Scene()
   const camera = new THREE.OrthographicCamera(-width/2, width/2, height/2, -height/2, 0.1, 1000)
   camera.position.z = 100
-  
+
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
   renderer.setSize(width, height)
   renderer.setPixelRatio(window.devicePixelRatio)
@@ -211,7 +212,7 @@ function createThreeJSText(letter, isHigh, isSelected, container) {
   texture.generateMipmaps = false
   texture.needsUpdate = true
   
-  const geometry = new THREE.PlaneGeometry(width * 0.8, height * 0.8)
+  const geometry = new THREE.PlaneGeometry(size * 0.8, size * 0.8)
   const material = new THREE.MeshBasicMaterial({ 
     map: texture, 
     transparent: true,
@@ -523,14 +524,22 @@ function gameLoop(timestamp) {
 }
 
 function loadDictionary() {
-  return fetch('/words.txt')
-    .then(r => r.text())
-    .then(text => {
-      const words = text.split(/\r?\n/).map(w => w.trim()).filter(Boolean)
+  return fetch('/dictionary.json')
+    .then(r => r.json())
+    .then(data => {
+      const words = Object.keys(data).map(w => w.toUpperCase())
       dictionary = new Set(words)
     })
     .catch(() => {
-      dictionary = new Set(fallbackWords)
+      return fetch('/words.txt')
+        .then(r => r.text())
+        .then(text => {
+          const words = text.split(/\r?\n/).map(w => w.trim()).filter(Boolean)
+          dictionary = new Set(words)
+        })
+        .catch(() => {
+          dictionary = new Set(fallbackWords)
+        })
     })
 }
 
