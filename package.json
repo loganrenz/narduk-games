@@ -18,13 +18,17 @@
     "stack-balance:build": "cd games/stack-balance && npm run build",
     "stack-balance:build:subdir": "cd games/stack-balance && VITE_BASE_PATH=/stack-balance/ npm run build",
     "stack-balance:test": "cd games/stack-balance && npm run test",
-    "install:all": "npm run install:lexi-stack && npm run install:wordle-clone && npm run install:stack-balance",
+    "tapweave:dev": "cd games/tapweave && npm run dev",
+    "tapweave:build": "cd games/tapweave && npm run build",
+    "tapweave:test": "cd games/tapweave && npm run test",
+    "install:all": "npm run install:lexi-stack && npm run install:wordle-clone && npm run install:stack-balance && npm run install:tapweave",
     "install:lexi-stack": "cd games/lexi-stack && npm install",
     "install:wordle-clone": "cd games/wordle-clone && npm install",
     "install:stack-balance": "cd games/stack-balance && npm install",
-    "build:all": "npm run lexi-stack:build && npm run wordle-clone:build && npm run stack-balance:build",
+    "install:tapweave": "cd games/tapweave && npm install",
+    "build:all": "npm run lexi-stack:build && npm run wordle-clone:build && npm run stack-balance:build && npm run tapweave:build",
     "build:all:subdir": "npm run lexi-stack:build:subdir && npm run wordle-clone:build:subdir && npm run stack-balance:build:subdir",
-    "test:all": "npm run lexi-stack:test && npm run wordle-clone:test && npm run stack-balance:test"
+    "test:all": "npm run lexi-stack:test && npm run wordle-clone:test && npm run stack-balance:test && npm run tapweave:test"
   },
   "repository": {
     "type": "git",

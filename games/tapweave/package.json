@@ -1,0 +1,14 @@
+{
+  "name": "tapweave",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "TapWeave word insertion chain-builder for the Narduk Games monorepo.",
+  "scripts": {
+    "dev": "echo \"TapWeave frontend not yet initialized. Run 'npm create vite@latest . -- --template vue-ts' to scaffold.\"",
+    "build": "echo \"TapWeave build not yet configured. Scaffold the Vite Vue TS app first.\"",
+    "test": "echo \"TapWeave tests not yet configured. Add Vitest after scaffolding.\"",
+    "deploy:worker": "echo \"TapWeave Cloudflare Worker not yet configured. Add wrangler setup after scaffolding.\"",
+    "db:migrate": "echo \"TapWeave D1 migrations not yet configured. Add migrations and wrangler scripts first.\""
+  }
+}
