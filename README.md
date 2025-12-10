@@ -8,6 +8,7 @@ A monorepo containing all games by Narduk.
 - **[Lexi-Stack](./games/lexi-stack)** - A word-stacking puzzle game
 - **[Wordle Clone](./games/wordle-clone)** - A Wordle-inspired word guessing game
 - **[Stack & Balance](./games/stack-balance)** - A physics-based stacking game
+- **[TapWeave](./games/tapweave)** - Word insertion chain-builder (tapweave.narduk.games)
 
 ## 🏗️ Monorepo Structure
 
@@ -86,6 +87,7 @@ Each component is deployed separately:
 - **Lexi-Stack** (`lexi-stack.narduk.games`): Deployed from `games/lexi-stack`
 - **Wordle Clone** (`wordle.narduk.games`): Deployed from `games/wordle-clone`
 - **Stack & Balance** (`stack-balance.narduk.games`): Deployed from `games/stack-balance`
+- **TapWeave** (`tapweave.narduk.games`): Deployed from `games/tapweave`
 
 ### Quick Deploy
 
