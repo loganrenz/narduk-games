@@ -333,7 +333,10 @@ function createBlock(type, position = { x: 0, y: 5, z: 0 }) {
 }
 
 function spawnNextBlock() {
-  if (!gameRunning || !canDrop) return
+  if (!gameRunning) return
+  
+  // Only check canDrop if we already have a current block
+  if (currentBlock && !canDrop) return
 
   const towerHeight = getTowerHeight()
   const spawnHeight = Math.max(towerHeight + 3, 5)
@@ -344,8 +347,9 @@ function spawnNextBlock() {
   currentBlockBody = currentBlock.body
   
   // Lock the block in place (kinematic) until dropped
-  currentBlockBody.setLinvel({ x: 0, y: 0, z: 0 }, true)
-  currentBlockBody.setAngvel({ x: 0, y: 0, z: 0 }, true)
+  // Set initial position and rotation for kinematic body
+  currentBlockBody.setNextKinematicTranslation({ x: 0, y: spawnHeight, z: 0 })
+  currentBlockBody.setNextKinematicRotation({ x: 0, y: 0, z: 0, w: 1 })
   
   // Reset rotation
   blockRotation = { x: 0, y: 0, z: 0 }
@@ -367,10 +371,10 @@ function updateBlockRotation() {
   
   currentBlock.mesh.setRotationFromQuaternion(quaternion)
   
-  // Update physics body rotation using Rapier Quaternion
-  // Rapier uses { x, y, z, w } format (same as Three.js)
+  // Update physics body rotation for kinematic body
+  // For kinematic bodies, use setNextKinematicRotation
   const rapierQuat = { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w }
-  currentBlockBody.setRotation(rapierQuat, true)
+  currentBlockBody.setNextKinematicRotation(rapierQuat)
 }
 
 function dropBlock() {
@@ -468,22 +472,31 @@ function checkStability() {
     }
 
     // Check if block has settled (low velocity and above platform)
-    if (!obj.settled && pos.y > 0.5 && velocity < 0.1) {
-      // Check if position has stabilized
+    if (!obj.settled && pos.y > 0.2) {
+      // Check if position has stabilized (less strict threshold)
       const positionChange = Math.sqrt(
         Math.pow(pos.x - obj.lastPosition.x, 2) +
         Math.pow(pos.y - obj.lastPosition.y, 2) +
         Math.pow(pos.z - obj.lastPosition.z, 2)
       )
       
-      if (positionChange < 0.01) {
-        obj.settled = true
-        obj.placed = true
-        if (!settledBlock) {
-          settledBlock = obj
+      // Block is settled if velocity is low AND position hasn't changed much
+      // Use less strict thresholds for better detection
+      if (velocity < 0.5 && positionChange < 0.05) {
+        // Double check: wait a bit more to ensure it's really settled
+        const timeSinceLastCheck = Date.now() - (obj.lastCheckTime || Date.now())
+        if (timeSinceLastCheck > 200) { // At least 200ms of stability
+          obj.settled = true
+          obj.placed = true
+          if (!settledBlock) {
+            settledBlock = obj
+          }
         }
       }
     }
+    
+    // Update last check time
+    obj.lastCheckTime = Date.now()
     
     // Update last position
     obj.lastPosition = { x: pos.x, y: pos.y, z: pos.z }
@@ -535,7 +548,12 @@ function checkStability() {
       30
     )
     awardPoints()
-    setTimeout(() => spawnNextBlock(), 500)
+    
+    // Reset canDrop flag and spawn next block
+    canDrop = true
+    setTimeout(() => {
+      spawnNextBlock()
+    }, 500)
   }
 }
 
@@ -785,10 +803,11 @@ function animate() {
     }
   })
   
-  // Update current block position if it exists (kinematic body)
+  // Update kinematic body position to match mesh (for current block)
   if (currentBlock && currentBlockBody) {
-    const pos = currentBlockBody.translation()
-    currentBlock.mesh.position.set(pos.x, pos.y, pos.z)
+    const pos = currentBlock.mesh.position
+    currentBlockBody.setNextKinematicTranslation({ x: pos.x, y: pos.y, z: pos.z })
+    // Rotation is handled by updateBlockRotation when user rotates
   }
 
   // Update camera to follow tower
