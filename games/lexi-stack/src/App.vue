@@ -362,14 +362,9 @@ function wordScore(word) {
 }
 
 function validateWord(word) {
-  console.log('[VALIDATE] Word:', word, 'Dictionary size:', dictionary.size, 'Has word:', dictionary.has(word))
   if (word.length < 2 || word.length > 8) return false
   if (!/^[A-Z]+$/.test(word)) return false
-  const result = dictionary.has(word)
-  if (!result) {
-    console.log('[VALIDATE] Word not found in dictionary:', word)
-  }
-  return result
+  return dictionary.has(word)
 }
 
 function submitSelection() {
