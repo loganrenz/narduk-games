@@ -122,6 +122,7 @@ let touchStartY = 0
 let touchStartTime = 0
 let isDragging = false
 let lastSwipeTime = 0
+let stabilityCheckInterval = null
 
 // Block Types
 const blockTypes = [
@@ -267,8 +268,17 @@ function createParticleEffect(position, color, count = 20) {
 }
 
 function createBlock(type, position = { x: 0, y: 5, z: 0 }) {
-  const blockData = blockTypes[Math.floor(Math.random() * blockTypes.length)]
-  nextBlockType.value = blockData.type
+  // Find block data by type, or randomly select if type not found
+  let blockData
+  if (type) {
+    blockData = blockTypes.find(bt => bt.type === type) || blockTypes[Math.floor(Math.random() * blockTypes.length)]
+  } else {
+    blockData = blockTypes[Math.floor(Math.random() * blockTypes.length)]
+  }
+  
+  // Set next block type for preview (random)
+  const nextBlock = blockTypes[Math.floor(Math.random() * blockTypes.length)]
+  nextBlockType.value = nextBlock.type
 
   let geometry, colliderDesc
   let mesh, body
@@ -304,18 +314,22 @@ function createBlock(type, position = { x: 0, y: 5, z: 0 }) {
   // Position
   mesh.position.set(position.x, position.y, position.z)
 
-  // Physics Body
-  const rigidBodyDesc = RAPIER.RigidBodyDesc.dynamic()
+  // Physics Body - use kinematic for current block (will be unlocked when dropped)
+  const rigidBodyDesc = RAPIER.RigidBodyDesc.kinematicVelocityBased()
     .setTranslation(position.x, position.y, position.z)
   
   const rigidBody = world.createRigidBody(rigidBodyDesc)
   const collider = world.createCollider(colliderDesc, rigidBody)
   
+  // Set restitution and friction for better stacking
+  collider.setRestitution(0.2)
+  collider.setFriction(0.8)
+  
   body = rigidBody
 
   scene.add(mesh)
 
-  return { mesh, body, type: blockData.type, color: blockData.color }
+  return { mesh, body, type: blockData.type, color: blockData.color, blockData }
 }
 
 function spawnNextBlock() {
@@ -324,8 +338,14 @@ function spawnNextBlock() {
   const towerHeight = getTowerHeight()
   const spawnHeight = Math.max(towerHeight + 3, 5)
 
-  currentBlock = createBlock(nextBlockType.value, { x: 0, y: spawnHeight, z: 0 })
+  // Use nextBlockType for the current block, or random if not set
+  const blockTypeToSpawn = nextBlockType.value || 'cube'
+  currentBlock = createBlock(blockTypeToSpawn, { x: 0, y: spawnHeight, z: 0 })
   currentBlockBody = currentBlock.body
+  
+  // Lock the block in place (kinematic) until dropped
+  currentBlockBody.setLinvel({ x: 0, y: 0, z: 0 }, true)
+  currentBlockBody.setAngvel({ x: 0, y: 0, z: 0 }, true)
   
   // Reset rotation
   blockRotation = { x: 0, y: 0, z: 0 }
@@ -348,8 +368,9 @@ function updateBlockRotation() {
   currentBlock.mesh.setRotationFromQuaternion(quaternion)
   
   // Update physics body rotation using Rapier Quaternion
+  // Rapier uses { x, y, z, w } format (same as Three.js)
   const rapierQuat = { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w }
-  currentBlockBody.setRotation(rapierQuat)
+  currentBlockBody.setRotation(rapierQuat, true)
 }
 
 function dropBlock() {
@@ -358,18 +379,64 @@ function dropBlock() {
   canDrop = false
   showControlsHint.value = false
 
+  // Convert kinematic body to dynamic so it falls
+  const pos = currentBlockBody.translation()
+  const rot = currentBlockBody.rotation()
+  
+  // Create new dynamic body
+  const rigidBodyDesc = RAPIER.RigidBodyDesc.dynamic()
+    .setTranslation(pos.x, pos.y, pos.z)
+    .setRotation(rot)
+  
+  const newBody = world.createRigidBody(rigidBodyDesc)
+  
+  // Create collider for new body
+  let colliderDesc
+  if (currentBlock.blockData.type === 'cube') {
+    const [w, h, d] = currentBlock.blockData.size
+    colliderDesc = RAPIER.ColliderDesc.cuboid(w/2, h/2, d/2)
+  } else if (currentBlock.blockData.type === 'cylinder') {
+    colliderDesc = RAPIER.ColliderDesc.cylinder(currentBlock.blockData.height/2, currentBlock.blockData.radius)
+  }
+  colliderDesc.setRestitution(0.2).setFriction(0.8)
+  world.createCollider(colliderDesc, newBody)
+  
+  // Remove old body
+  world.removeRigidBody(currentBlockBody)
+  
+  // Update mesh reference
+  currentBlock.body = newBody
+
   // Block is now falling - wait for it to settle
   physicsObjects.push({
     mesh: currentBlock.mesh,
-    body: currentBlockBody,
-    placed: false
+    body: newBody,
+    blockData: currentBlock.blockData,
+    placed: false,
+    settled: false,
+    lastPosition: { x: pos.x, y: pos.y, z: pos.z },
+    lastCheckTime: Date.now()
   })
 
   currentBlock = null
   currentBlockBody = null
 
-  // Check stability after a delay
-  setTimeout(checkStability, 1000)
+  // Start continuous stability checking
+  startStabilityCheck()
+}
+
+function startStabilityCheck() {
+  // Clear any existing interval
+  if (stabilityCheckInterval) {
+    clearInterval(stabilityCheckInterval)
+  }
+  
+  // Start checking after initial delay
+  setTimeout(() => {
+    stabilityCheckInterval = setInterval(() => {
+      checkStability()
+    }, 100) // Check every 100ms
+  }, 500) // Wait 500ms before starting checks
 }
 
 function checkStability() {
@@ -377,26 +444,65 @@ function checkStability() {
   let hasCollapsed = false
   let maxHeight = 0
   let settledBlock = null
+  let allSettled = true
 
   physicsObjects.forEach((obj, index) => {
     const pos = obj.body.translation()
-    maxHeight = Math.max(maxHeight, pos.y)
+    const linvel = obj.body.linvel()
+    const velocity = Math.sqrt(linvel.x * linvel.x + linvel.y * linvel.y + linvel.z * linvel.z)
+    
+    // Calculate block height (position + half height)
+    let blockHeight = pos.y
+    if (obj.blockData) {
+      if (obj.blockData.type === 'cube') {
+        blockHeight += obj.blockData.size[1] / 2
+      } else if (obj.blockData.type === 'cylinder') {
+        blockHeight += obj.blockData.height / 2
+      }
+    }
+    maxHeight = Math.max(maxHeight, blockHeight)
 
     // If block fell below platform level
     if (pos.y < -1) {
       hasCollapsed = true
     }
 
-    // Mark as placed after settling
-    if (!obj.placed && pos.y > 0.5) {
-      obj.placed = true
-      settledBlock = obj
+    // Check if block has settled (low velocity and above platform)
+    if (!obj.settled && pos.y > 0.5 && velocity < 0.1) {
+      // Check if position has stabilized
+      const positionChange = Math.sqrt(
+        Math.pow(pos.x - obj.lastPosition.x, 2) +
+        Math.pow(pos.y - obj.lastPosition.y, 2) +
+        Math.pow(pos.z - obj.lastPosition.z, 2)
+      )
+      
+      if (positionChange < 0.01) {
+        obj.settled = true
+        obj.placed = true
+        if (!settledBlock) {
+          settledBlock = obj
+        }
+      }
+    }
+    
+    // Update last position
+    obj.lastPosition = { x: pos.x, y: pos.y, z: pos.z }
+    
+    // Check if all blocks are settled
+    if (!obj.settled) {
+      allSettled = false
     }
   })
 
   height.value = Math.floor(maxHeight)
 
   if (hasCollapsed) {
+    // Stop stability checking
+    if (stabilityCheckInterval) {
+      clearInterval(stabilityCheckInterval)
+      stabilityCheckInterval = null
+    }
+    
     // Create collapse particle effect
     physicsObjects.forEach(obj => {
       if (obj.placed) {
@@ -412,8 +518,15 @@ function checkStability() {
     return
   }
 
-  // Award points and spawn next block
-  if (physicsObjects.length > 0 && settledBlock) {
+  // Award points and spawn next block when a block has settled
+  if (settledBlock && !settledBlock.awarded) {
+    // Stop stability checking
+    if (stabilityCheckInterval) {
+      clearInterval(stabilityCheckInterval)
+      stabilityCheckInterval = null
+    }
+    
+    settledBlock.awarded = true
     const pos = settledBlock.body.translation()
     // Create success particle effect
     createParticleEffect(
@@ -445,7 +558,16 @@ function getTowerHeight() {
   let maxY = 0
   physicsObjects.forEach(obj => {
     const pos = obj.body.translation()
-    maxY = Math.max(maxY, pos.y)
+    // Calculate block top position (position + half height)
+    let blockTop = pos.y
+    if (obj.blockData) {
+      if (obj.blockData.type === 'cube') {
+        blockTop += obj.blockData.size[1] / 2
+      } else if (obj.blockData.type === 'cylinder') {
+        blockTop += obj.blockData.height / 2
+      }
+    }
+    maxY = Math.max(maxY, blockTop)
   })
   return maxY
 }
@@ -453,6 +575,12 @@ function getTowerHeight() {
 function endGame() {
   gameRunning = false
   showGameOver.value = true
+  
+  // Stop stability checking
+  if (stabilityCheckInterval) {
+    clearInterval(stabilityCheckInterval)
+    stabilityCheckInterval = null
+  }
 }
 
 function startGame() {
@@ -463,6 +591,13 @@ function startGame() {
   height.value = 0
   combo.value = 1.0
   blocksPlaced.value = 0
+  bestCombo.value = 1.0
+
+  // Stop any ongoing stability checks
+  if (stabilityCheckInterval) {
+    clearInterval(stabilityCheckInterval)
+    stabilityCheckInterval = null
+  }
 
   // Clear existing blocks
   physicsObjects.forEach(obj => {
@@ -470,10 +605,19 @@ function startGame() {
     world.removeRigidBody(obj.body)
   })
   physicsObjects = []
+  
+  // Reset current block
+  currentBlock = null
+  currentBlockBody = null
+  canDrop = true
 
   // Spawn first block
   spawnNextBlock()
-  animate()
+  
+  // Start animation loop if not already running
+  if (!animationFrameId) {
+    animate()
+  }
 }
 
 function resetGame() {
@@ -542,7 +686,16 @@ function handleTouchMove(e) {
 
 function handleTouchEnd(e) {
   e.preventDefault()
-  const touch = e.changedTouches?.[0] || e
+  // Handle both touch and mouse events
+  let touch
+  if (e.changedTouches && e.changedTouches.length > 0) {
+    touch = e.changedTouches[0]
+  } else if (e.touches && e.touches.length > 0) {
+    touch = e.touches[0]
+  } else {
+    touch = e
+  }
+  
   const deltaTime = Date.now() - touchStartTime
   const deltaX = Math.abs(touch.clientX - touchStartX)
   const deltaY = Math.abs(touch.clientY - touchStartY)
@@ -627,9 +780,16 @@ function animate() {
     const rot = obj.body.rotation()
     obj.mesh.position.set(pos.x, pos.y, pos.z)
     if (rot) {
+      // Rapier rotation is { w, x, y, z }
       obj.mesh.quaternion.set(rot.x, rot.y, rot.z, rot.w)
     }
   })
+  
+  // Update current block position if it exists (kinematic body)
+  if (currentBlock && currentBlockBody) {
+    const pos = currentBlockBody.translation()
+    currentBlock.mesh.position.set(pos.x, pos.y, pos.z)
+  }
 
   // Update camera to follow tower
   const towerHeight = getTowerHeight()
