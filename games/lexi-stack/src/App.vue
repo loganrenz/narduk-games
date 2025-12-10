@@ -542,7 +542,7 @@ async function loadDictionary() {
     try {
       const response = await fetch('/words.txt')
       const text = await response.text()
-      const words = text.split(/\r?\n/).map(w => w.trim()).filter(Boolean)
+      const words = text.split(/\r?\n/).map(w => w.trim().toUpperCase()).filter(Boolean)
       dictionary = new Set(words)
       dictionaryLoaded.value = true
     } catch (error2) {
@@ -604,7 +604,7 @@ function attachEvents() {
   
   gridRef.value.addEventListener('pointerdown', e => {
     const cell = e.target.closest('.cell')
-    if (!cell || !running || paused.value) return
+    if (!cell || !running || paused.value || !dictionaryLoaded.value) return
     const row = Number(cell.dataset.row)
     const col = Number(cell.dataset.col)
     if (!grid[row][col]) return
