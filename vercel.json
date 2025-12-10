@@ -76,8 +76,8 @@
       ]
     },
     {
-      "source": "/potprefix/(.*)",
-      "destination": "/games/potprefix/dist/$1",
+      "source": "/2048/(.*)",
+      "destination": "/games/2048-clone/dist/$1",
       "has": [
         {
           "type": "host",
@@ -86,8 +86,8 @@
       ]
     },
     {
-      "source": "/potprefix",
-      "destination": "/games/potprefix/dist/index.html",
+      "source": "/2048",
+      "destination": "/games/2048-clone/dist/index.html",
       "has": [
         {
           "type": "host",
@@ -95,19 +95,6 @@
         }
       ]
     },
-    {
-      "source": "/tapweave/(.*)",
-      "destination": "/games/tapweave/dist/$1",
-      "has": [
-        {
-          "type": "host",
-          "value": "games.nard.uk"
-        }
-      ]
-    },
-    {
-      "source": "/tapweave",
-      "destination": "/games/tapweave/dist/index.html",
       "has": [
         {
           "type": "host",
