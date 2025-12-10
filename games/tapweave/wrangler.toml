@@ -9,8 +9,9 @@ database_name = "tapweave-db"
 database_id = "tapweave-db"
 
 # Environment variables
+# NOTE: Set JWT_SECRET as a Cloudflare Worker secret in production using:
+# wrangler secret put JWT_SECRET
 [vars]
-JWT_SECRET = "tapweave-secret-change-in-production"
 AUTH_API_URL = "https://narduk-games-auth-api.narduk.workers.dev"
 
 [env.production]

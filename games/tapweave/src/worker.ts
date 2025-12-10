@@ -122,8 +122,8 @@ async function handleRegister(request: Request, db: D1Database, corsHeaders: Rec
     'INSERT INTO users (id, email, password_hash, display_name) VALUES (?, ?, ?, ?)'
   ).bind(userId, email, passwordHash, displayName || email.split('@')[0]).run()
 
-  // Generate token (simplified - use proper JWT in production)
-  const token = btoa(userId + ':' + Date.now())
+  // Generate token
+  const token = generateToken(userId)
 
   return new Response(
     JSON.stringify({
@@ -146,7 +146,7 @@ async function handleLogin(request: Request, db: D1Database, corsHeaders: Record
     )
   }
 
-  // In production, verify password hash properly
+  // Verify password hash
   const passwordHash = await hashPassword(password)
   if (user.password_hash !== passwordHash) {
     return new Response(
@@ -156,7 +156,7 @@ async function handleLogin(request: Request, db: D1Database, corsHeaders: Record
   }
 
   // Generate token
-  const token = btoa(user.id + ':' + Date.now())
+  const token = generateToken(user.id)
 
   await db.prepare('UPDATE users SET last_login = ? WHERE id = ?')
     .bind(Math.floor(Date.now() / 1000), user.id).run()
@@ -302,10 +302,26 @@ async function handleGetGame(gameId: string, db: D1Database, corsHeaders: Record
   )
 }
 
-// Helper: Simple password hashing (use proper library in production)
+// Helper: Password hashing
+// NOTE: This is a basic implementation for demonstration.
+// In production, use a proper password hashing library like bcrypt or Argon2
+// For Cloudflare Workers, consider using the Web Crypto API with PBKDF2
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder()
-  const data = encoder.encode(password)
+  const data = encoder.encode(password + 'tapweave_salt_change_in_prod')
   const hash = await crypto.subtle.digest('SHA-256', data)
   return btoa(String.fromCharCode(...new Uint8Array(hash)))
+}
+
+// Helper: Generate JWT token
+// NOTE: This is a simplified implementation. In production, use a proper JWT library
+// and sign tokens with the JWT_SECRET from environment variables
+function generateToken(userId: string): string {
+  // For production, implement proper JWT with signing:
+  // const payload = { userId, iat: Date.now() }
+  // return jwt.sign(payload, env.JWT_SECRET)
+  
+  // For now, use a basic encoded format (NOT SECURE FOR PRODUCTION)
+  const payload = JSON.stringify({ userId, iat: Date.now() })
+  return btoa(payload)
 }

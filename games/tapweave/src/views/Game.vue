@@ -333,7 +333,7 @@ onUnmounted(() => {
 
         <div class="space-y-3">
           <button
-            @click="gameStore.startGame(gameStore.gameMode); gameStore.resetGame(); gameStore.startGame(gameStore.gameMode)"
+            @click="() => { const mode = gameStore.gameMode; gameStore.resetGame(); gameStore.startGame(mode); }"
             class="w-full bg-white text-purple-600 font-bold py-3 px-6 rounded-xl shadow-lg hover:bg-gray-100 transition-all"
           >
             Play Again
