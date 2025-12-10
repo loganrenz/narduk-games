@@ -6,6 +6,7 @@
         <button v-if="currentUser" class="user-badge" @click="showProfile = true">
           {{ currentUser.displayname || currentUser.username }}
         </button>
+        <button @click="openCalendar">Calendar</button>
         <button @click="showStats = true">Stats</button>
         <button @click="showHelp = true">Help</button>
         <button v-if="!currentUser" @click="showLogin = true">Login</button>
@@ -161,6 +162,38 @@
       </div>
     </div>
 
+    <!-- Calendar Modal -->
+    <div v-if="showCalendar" class="overlay" @click.self="showCalendar = false">
+      <div class="modal calendar-modal">
+        <h2>Pick a Game</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+          {{ hasPlayedToday ? 'You\'ve already played today! Choose a previous day:' : 'Choose a day to play:' }}
+        </p>
+        <div class="calendar-grid">
+          <div
+            v-for="day in calendarDays"
+            :key="day.dayNumber"
+            class="calendar-day"
+            :class="{
+              'completed': day.completed,
+              'today': day.isToday,
+              'selected': day.dayNumber === currentDayNumber,
+              'disabled': day.isFuture
+            }"
+            @click="!day.isFuture && selectDay(day.dayNumber)"
+          >
+            <div class="day-number">{{ day.day }}</div>
+            <div class="day-month">{{ day.monthShort }}</div>
+            <div v-if="day.completed" class="day-status">✓</div>
+            <div v-else-if="day.isToday && !hasPlayedToday" class="day-status today-badge">Today</div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button @click="showCalendar = false">Close</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Game Over Modal -->
     <div v-if="gameWon || gameLost" class="overlay" @click.self="closeGameOver">
       <div class="modal">
@@ -179,7 +212,7 @@
         </div>
         <div class="modal-actions">
           <button @click="closeGameOver">Close</button>
-          <button class="primary" @click="newGame">New Game</button>
+          <button class="primary" @click="openCalendar">Play Another Day</button>
         </div>
       </div>
     </div>
@@ -274,7 +307,10 @@ const showHelp = ref(false)
 const showStats = ref(false)
 const showLogin = ref(false)
 const showProfile = ref(false)
+const showCalendar = ref(false)
 const currentUser = ref(null)
+const currentDayNumber = ref(0)
+const playedGames = ref({}) // dayNumber -> {completed: bool, attempts: number, date: string}
 const loginMode = ref('login') // 'login' or 'signup'
 const loginUsername = ref('')
 const loginPassword = ref('')
@@ -318,7 +354,8 @@ const shareText = computed(() => {
   
   // Calculate the number of rows used
   const rowsUsed = gameWon.value ? currentRow.value + 1 : (gameLost.value ? ROWS : currentRow.value + 1)
-  const lines = [`Wordle ${getDayNumber()} ${rowsUsed}/6`]
+  const dateStr = dateFromDayNumber(currentDayNumber.value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const lines = [`Wordle ${currentDayNumber.value} (${dateStr}) ${rowsUsed}/6`]
   
   board.value.slice(0, rowsUsed).forEach(row => {
     const line = row.map(tile => {
@@ -345,24 +382,66 @@ function setCanvasRef(el, row, col) {
   }
 }
 
-function getDayNumber() {
-  const start = new Date(2024, 0, 1)
-  const today = new Date()
-  const diff = Math.floor((today - start) / (1000 * 60 * 60 * 24))
-  return diff
+const GAME_START_DATE = new Date(2024, 0, 1) // January 1, 2024
+
+function getDayNumber(date = new Date()) {
+  const start = new Date(GAME_START_DATE)
+  start.setHours(0, 0, 0, 0)
+  const target = new Date(date)
+  target.setHours(0, 0, 0, 0)
+  const diff = Math.floor((target - start) / (1000 * 60 * 60 * 24))
+  return Math.max(0, diff) // Never return negative
 }
 
-function getDailyWord() {
+function getDailyWord(dayNumber = null) {
+  const dayNum = dayNumber !== null ? dayNumber : getDayNumber()
+  
   if (!wordList.value || wordList.value.length === 0) {
     // Fallback if word list not loaded yet
     const fallback = ['APPLE', 'BEACH', 'CHAIR', 'DANCE', 'EARTH', 'FLAME', 'GLASS', 'HEART', 'IMAGE', 'JAZZY']
-    const dayNumber = getDayNumber()
-    return fallback[dayNumber % fallback.length]
+    return fallback[dayNum % fallback.length]
   }
-  const dayNumber = getDayNumber()
-  const index = dayNumber % wordList.value.length
+  const index = dayNum % wordList.value.length
   return wordList.value[index].toUpperCase()
 }
+
+function dateFromDayNumber(dayNumber) {
+  const date = new Date(GAME_START_DATE)
+  date.setDate(date.getDate() + dayNumber)
+  return date
+}
+
+const hasPlayedToday = computed(() => {
+  const today = getDayNumber()
+  return playedGames.value[today]?.completed || false
+})
+
+const calendarDays = computed(() => {
+  const today = getDayNumber()
+  const days = []
+  const todayDate = new Date()
+  
+  // Show last 30 days + today + next 7 days (for visual context)
+  for (let i = -30; i <= 7; i++) {
+    const dayNum = today + i
+    const date = dateFromDayNumber(dayNum)
+    const gameData = playedGames.value[dayNum]
+    
+    days.push({
+      dayNumber: dayNum,
+      day: date.getDate(),
+      month: date.getMonth(),
+      monthShort: date.toLocaleDateString('en-US', { month: 'short' }),
+      date: date,
+      isToday: dayNum === today,
+      isFuture: dayNum > today,
+      completed: gameData?.completed || false,
+      attempts: gameData?.attempts || null
+    })
+  }
+  
+  return days.reverse() // Show most recent first
+})
 
 async function loadWordList() {
   try {
@@ -408,17 +487,49 @@ function saveStats() {
   saveToLocalStorage('wordle_stats', stats.value)
 }
 
-function loadGameState() {
-  const saved = loadFromLocalStorage('wordle_game')
-  const today = getDayNumber()
+function loadPlayedGames() {
+  const saved = loadFromLocalStorage('wordle_played_games')
+  if (saved) {
+    playedGames.value = saved
+  }
+}
+
+function savePlayedGames() {
+  saveToLocalStorage('wordle_played_games', playedGames.value)
+}
+
+function markGameCompleted(dayNumber, attempts, won) {
+  if (!playedGames.value[dayNumber]) {
+    playedGames.value[dayNumber] = {
+      completed: false,
+      attempts: null,
+      date: new Date().toISOString(),
+      won: false
+    }
+  }
   
-  // Always clear if it's not today's game
-  if (saved && saved.day !== today) {
-    localStorage.removeItem('wordle_game')
+  playedGames.value[dayNumber].completed = true
+  playedGames.value[dayNumber].attempts = attempts
+  playedGames.value[dayNumber].won = won
+  playedGames.value[dayNumber].date = new Date().toISOString()
+  
+  savePlayedGames()
+}
+
+function loadGameState(dayNumber = null) {
+  const dayNum = dayNumber !== null ? dayNumber : currentDayNumber.value
+  const saved = loadFromLocalStorage(`wordle_game_${dayNum}`)
+  
+  // Check if game is already completed - don't load completed games
+  if (playedGames.value[dayNum]?.completed) {
+    // Clear any saved state for completed games
+    if (saved) {
+      localStorage.removeItem(`wordle_game_${dayNum}`)
+    }
     return false
   }
   
-  if (saved && saved.day === today && saved.targetWord) {
+  if (saved && saved.day === dayNum && saved.targetWord) {
     // Validate saved state
     if (saved.board && Array.isArray(saved.board) && saved.board.length === ROWS) {
       // Deep clone to ensure reactivity
@@ -431,18 +542,20 @@ function loadGameState() {
       gameWon.value = saved.gameWon || false
       gameLost.value = saved.gameLost || false
       keyStates.value = saved.keyStates || {}
+      currentDayNumber.value = dayNum
       return true
     } else {
       // Invalid board structure, clear it
-      localStorage.removeItem('wordle_game')
+      localStorage.removeItem(`wordle_game_${dayNum}`)
     }
   }
   return false
 }
 
 function saveGameState() {
-  saveToLocalStorage('wordle_game', {
-    day: getDayNumber(),
+  const key = `wordle_game_${currentDayNumber.value}`
+  saveToLocalStorage(key, {
+    day: currentDayNumber.value,
     board: board.value,
     currentRow: currentRow.value,
     currentCol: currentCol.value,
@@ -641,25 +754,38 @@ async function submitGuess() {
   }
   
   // Check win/loss - do this after animations complete
+  const attempts = rowIndex + 1
   if (results.every(r => r === 'correct')) {
     gameWon.value = true
     // Don't increment currentRow if won - keep it at the winning row
     stats.value.gamesWon++
     stats.value.currentStreak++
     stats.value.maxStreak = Math.max(stats.value.maxStreak, stats.value.currentStreak)
+    
+    // Mark game as completed
+    markGameCompleted(currentDayNumber.value, attempts, true)
+    
     addToast('Congratulations!', 'success')
   } else if (rowIndex === ROWS - 1) {
     gameLost.value = true
     stats.value.currentStreak = 0
+    
+    // Mark game as completed (lost)
+    markGameCompleted(currentDayNumber.value, attempts, false)
+    
     addToast(`The word was: ${targetWord.value}`, 'error')
   } else {
     currentRow.value = rowIndex + 1
     currentCol.value = 0
   }
   
-  stats.value.gamesPlayed++
-  stats.value.lastPlayed = getDayNumber()
-  saveStats()
+  // Only increment gamesPlayed on completion
+  if (gameWon.value || gameLost.value) {
+    stats.value.gamesPlayed++
+    stats.value.lastPlayed = currentDayNumber.value
+    saveStats()
+  }
+  
   saveGameState()
 }
 
@@ -732,11 +858,21 @@ function copyShareText() {
   })
 }
 
-function newGame() {
+function newGame(dayNumber = null) {
+  const dayNum = dayNumber !== null ? dayNumber : getDayNumber()
+  
+  // Don't allow playing completed games
+  if (playedGames.value[dayNum]?.completed) {
+    addToast('You\'ve already completed this day!', 'info')
+    openCalendar()
+    return
+  }
+  
   gameWon.value = false
   gameLost.value = false
   currentRow.value = 0
   currentCol.value = 0
+  currentDayNumber.value = dayNum
   // Create fresh board with proper reactivity
   board.value = Array(ROWS).fill(null).map(() => 
     Array(COLS).fill(null).map(() => ({ 
@@ -747,10 +883,23 @@ function newGame() {
     }))
   )
   keyStates.value = {}
-  targetWord.value = getDailyWord()
-  // Clear old saved state
-  localStorage.removeItem('wordle_game')
+  targetWord.value = getDailyWord(dayNum)
+  // Clear old saved state for this day
+  localStorage.removeItem(`wordle_game_${dayNum}`)
   saveGameState()
+  showCalendar.value = false
+}
+
+function selectDay(dayNumber) {
+  if (playedGames.value[dayNumber]?.completed) {
+    addToast('You\'ve already completed this day!', 'info')
+    return
+  }
+  newGame(dayNumber)
+}
+
+function openCalendar() {
+  showCalendar.value = true
 }
 
 function closeGameOver() {
@@ -870,48 +1019,54 @@ onMounted(async () => {
   
   await loadWordList()
   loadStats()
+  loadPlayedGames()
   
-  // Initialize target word after word list is loaded
-  targetWord.value = getDailyWord()
+  // Set current day number to today
+  currentDayNumber.value = getDayNumber()
   
-  // Check if this is first visit - show help
-  const hasSeenHelp = loadFromLocalStorage('wordle_help_seen')
-  if (!hasSeenHelp) {
-    showHelp.value = true
-    saveToLocalStorage('wordle_help_seen', true)
+  // Check if user has already played today
+  const today = getDayNumber()
+  const hasPlayedToday = playedGames.value[today]?.completed
+  
+  if (hasPlayedToday) {
+    // Show calendar to pick a different day
+    showCalendar.value = true
+    // Still load today's word for display, but don't start the game
+    targetWord.value = getDailyWord(today)
+  } else {
+    // Try to load saved game state for today
+    const hasSavedState = loadGameState(today)
+    
+    if (!hasSavedState) {
+      // Fresh game - initialize today's game
+      targetWord.value = getDailyWord(today)
+      board.value = Array(ROWS).fill(null).map(() => 
+        Array(COLS).fill(null).map(() => ({ 
+          letter: '', 
+          state: null, 
+          flipping: false, 
+          bounce: false 
+        }))
+      )
+      currentRow.value = 0
+      currentCol.value = 0
+      gameWon.value = false
+      gameLost.value = false
+      keyStates.value = {}
+      saveGameState()
+    } else {
+      // If we loaded saved state, make sure target word is set
+      if (!targetWord.value) {
+        targetWord.value = getDailyWord(today)
+      }
+    }
   }
   
-  // Try to load saved game state for today
-  const hasSavedState = loadGameState()
-  
-  if (!hasSavedState) {
-    // Fresh game - ensure board is empty with proper reactivity
-    board.value = Array(ROWS).fill(null).map(() => 
-      Array(COLS).fill(null).map(() => ({ 
-        letter: '', 
-        state: null, 
-        flipping: false, 
-        bounce: false 
-      }))
-    )
-    currentRow.value = 0
-    currentCol.value = 0
-    gameWon.value = false
-    gameLost.value = false
-    keyStates.value = {}
-    saveGameState()
-  } else {
-    // If we loaded saved state, make sure target word is set
-    if (!targetWord.value) {
-      targetWord.value = getDailyWord()
-    }
-    // Validate the loaded state - if game is won/lost, don't allow further play
-    // But if it's a new day, reset
-    const saved = loadFromLocalStorage('wordle_game')
-    if (saved && saved.day !== getDayNumber()) {
-      // It's a new day, reset
-      newGame()
-    }
+  // Check if this is first visit - show help (but not if showing calendar)
+  const hasSeenHelp = loadFromLocalStorage('wordle_help_seen')
+  if (!hasSeenHelp && !hasPlayedToday) {
+    showHelp.value = true
+    saveToLocalStorage('wordle_help_seen', true)
   }
   
   // No need to render tiles - CSS handles the colors
