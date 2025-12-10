@@ -6,7 +6,7 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "stack-balance-data"
-# database_id will be set after creating the database with: wrangler d1 create stack-balance-data
+database_id = "cfd67598-70b6-4279-9fa4-4408762be3ae"
 
 # Auth API URL for user validation
 vars = { AUTH_API_URL = "https://narduk-games-auth-api.narduk.workers.dev" }
@@ -15,7 +15,7 @@ vars = { AUTH_API_URL = "https://narduk-games-auth-api.narduk.workers.dev" }
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "stack-balance-data"
-# database_id will be set after creating the database
+database_id = "cfd67598-70b6-4279-9fa4-4408762be3ae"
 
 [env.production.vars]
 AUTH_API_URL = "https://narduk-games-auth-api.narduk.workers.dev"

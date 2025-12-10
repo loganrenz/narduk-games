@@ -6,7 +6,7 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "wordle-clone-data"
-# database_id will be set after creating the database with: wrangler d1 create wordle-clone-data
+database_id = "d6596363-f299-4658-b32e-2934ab20105a"
 
 # Auth API URL for user validation
 vars = { AUTH_API_URL = "https://narduk-games-auth-api.narduk.workers.dev" }
@@ -15,7 +15,7 @@ vars = { AUTH_API_URL = "https://narduk-games-auth-api.narduk.workers.dev" }
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "wordle-clone-data"
-# database_id will be set after creating the database
+database_id = "d6596363-f299-4658-b32e-2934ab20105a"
 
 [env.production.vars]
 AUTH_API_URL = "https://narduk-games-auth-api.narduk.workers.dev"
