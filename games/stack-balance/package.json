@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:worker": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply YOUR_DB_ID --remote",
+    "db:migrate:local": "wrangler d1 migrations apply YOUR_DB_ID --local"
   },
   "dependencies": {
     "@dimforge/rapier3d": "^0.19.3",
@@ -15,6 +18,7 @@
     "vue": "^3.5.25"
   },
   "devDependencies": {
-    "vite-plugin-wasm": "^3.5.0"
+    "vite-plugin-wasm": "^3.5.0",
+    "wrangler": "^4.53.0"
   }
 }
