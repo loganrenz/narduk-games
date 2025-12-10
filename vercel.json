@@ -76,6 +76,26 @@
       ]
     },
     {
+      "source": "/potprefix/(.*)",
+      "destination": "/games/potprefix/dist/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/potprefix",
+      "destination": "/games/potprefix/dist/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "destination": "/games/lexi-stack/dist/$1",
       "has": [
@@ -112,6 +132,26 @@
         {
           "type": "host",
           "value": "wordle.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/games/potprefix/dist/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "potprefix.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/",
+      "destination": "/games/potprefix/dist/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "potprefix.nard.uk"
         }
       ]
     },
