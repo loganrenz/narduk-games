@@ -37,6 +37,9 @@ export default {
       if (path === '/api/games' && method === 'GET') {
         return handleGetPlayedGames(request, env.DB, env.AUTH_API_URL, corsHeaders);
       }
+      if (path === '/api/daily-word' && method === 'GET') {
+        return handleGetDailyWord(request, env.DB, corsHeaders);
+      }
 
       return new Response('Not Found', { status: 404, headers: corsHeaders });
     } catch (error) {
@@ -220,6 +223,35 @@ async function handleGetPlayedGames(request, db, authApiUrl, corsHeaders) {
 
   return new Response(
     JSON.stringify({ playedGames }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+// Get daily word for a specific day number
+async function handleGetDailyWord(request, db, corsHeaders) {
+  const url = new URL(request.url);
+  const dayNumber = url.searchParams.get('dayNumber');
+
+  if (!dayNumber) {
+    return new Response(
+      JSON.stringify({ error: 'Missing dayNumber parameter' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const result = await db.prepare(
+    `SELECT word FROM daily_words WHERE day_number = ?`
+  ).bind(parseInt(dayNumber, 10)).first();
+
+  if (!result) {
+    return new Response(
+      JSON.stringify({ error: 'Word not found for this day' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  return new Response(
+    JSON.stringify({ word: result.word, dayNumber: parseInt(dayNumber, 10) }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
 }

@@ -2,90 +2,137 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { getSeed, trie } from '../utils/trie'
 
+export type GameMode = 'endless' | 'challenge' | 'timed'
+
 const rareLetters = new Set(['Q', 'Z', 'J', 'X'])
 
 export const usePotStore = defineStore('potprefix', () => {
-  const bankroll = ref(1000)
-  const pot = ref(0)
+  // Game state
+  const gameMode = ref<GameMode>('endless')
+  const score = ref(0)
+  const highScore = ref(0)
   const chain = ref<string[]>([])
   const currentWord = ref(getSeed())
   const selectedLetter = ref<string | null>(null)
-  const lastBust = ref<string | null>(null)
+  const gameOver = ref(false)
+  const timeRemaining = ref(60) // for timed mode
+  const targetChainLength = ref(10) // for challenge mode
 
+  // Computed values
   const previewWord = computed(() => (selectedLetter.value ? `${selectedLetter.value}${currentWord.value}` : ''))
   const chainLength = computed(() => chain.value.length)
   const previewIsValid = computed(() => (previewWord.value ? trie.has(previewWord.value) : false))
-
-  const multiplier = computed(() => {
-    let base = Math.pow(1.2, chainLength.value)
-    if (selectedLetter.value && rareLetters.has(selectedLetter.value.toUpperCase())) {
-      base *= 1.5
+  
+  // Get valid letters for current word
+  const validLetters = computed(() => {
+    const letters: string[] = []
+    for (const letter of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') {
+      if (trie.has(`${letter}${currentWord.value}`)) {
+        letters.push(letter)
+      }
     }
-    if (chainLength.value >= 10) {
-      base *= 10
-    }
-    return Number(base.toFixed(2))
+    return letters
   })
 
+  // Calculate points for a word
+  const getWordPoints = (word: string, position: number) => {
+    let points = word.length * 10 // Base points for word length
+    points += position * 5 // Bonus for chain position
+    
+    // Rare letter bonus
+    for (const letter of word) {
+      if (rareLetters.has(letter.toUpperCase())) {
+        points += 20
+      }
+    }
+    
+    // Chain length bonus
+    if (chainLength.value >= 5) points *= 1.5
+    if (chainLength.value >= 10) points *= 2
+    if (chainLength.value >= 15) points *= 3
+    
+    return Math.round(points)
+  }
+
+  // Try selecting a letter (just preview, doesn't commit)
   const tryPrefix = (letter: string) => {
     selectedLetter.value = letter.toUpperCase()
     return previewIsValid.value
   }
 
-  const riskAnte = (ante: number) => {
+  // Commit the selected letter and build the word
+  const buildWord = () => {
     if (!previewIsValid.value || !selectedLetter.value) return false
-    if (ante <= 0 || ante > bankroll.value) return false
-
-    bankroll.value -= ante
-    const winnings = Math.round(ante * multiplier.value)
-    pot.value += winnings
-    currentWord.value = previewWord.value
-    chain.value.push(currentWord.value)
+    
+    const newWord = previewWord.value
+    const points = getWordPoints(newWord, chainLength.value)
+    
+    currentWord.value = newWord
+    chain.value.push(newWord)
+    score.value += points
+    
+    // Update high score
+    if (score.value > highScore.value) {
+      highScore.value = score.value
+    }
+    
     selectedLetter.value = null
-    lastBust.value = null
+    
+    // Check win conditions
+    if (gameMode.value === 'challenge' && chainLength.value >= targetChainLength.value) {
+      gameOver.value = true
+    }
+    
     return true
   }
 
-  const cashOut = () => {
-    bankroll.value += pot.value
-    pot.value = 0
+  // Start a new game
+  const startGame = (mode: GameMode = 'endless', seed?: string) => {
+    gameMode.value = mode
+    score.value = 0
     chain.value = []
-    selectedLetter.value = null
-    lastBust.value = null
-    currentWord.value = getSeed()
-  }
-
-  const bust = () => {
-    lastBust.value = previewWord.value || currentWord.value
-    pot.value = 0
-    chain.value = []
-    selectedLetter.value = null
-    currentWord.value = getSeed()
-  }
-
-  const reset = (seed?: string) => {
-    bankroll.value = 1000
-    pot.value = 0
-    chain.value = []
-    selectedLetter.value = null
-    lastBust.value = null
     currentWord.value = seed ? seed.toUpperCase() : getSeed()
+    selectedLetter.value = null
+    gameOver.value = false
+    timeRemaining.value = 60
+    
+    if (mode === 'timed') {
+      // Start timer (would need to be implemented with setInterval in component)
+    }
+  }
+
+  // Reset to initial state
+  const reset = (seed?: string) => {
+    startGame('endless', seed)
+  }
+
+  // Clear selection without building
+  const clearSelection = () => {
+    selectedLetter.value = null
   }
 
   return {
-    bankroll,
-    pot,
+    // State
+    gameMode,
+    score,
+    highScore,
     chain,
     currentWord,
     selectedLetter,
+    gameOver,
+    timeRemaining,
+    targetChainLength,
+    // Computed
     previewWord,
+    chainLength,
     previewIsValid,
-    multiplier,
-    lastBust,
+    validLetters,
+    // Methods
     tryPrefix,
-    riskAnte,
-    cashOut,
-    bust,
+    buildWord,
+    startGame,
     reset,
+    clearSelection,
+    getWordPoints,
   }
 })

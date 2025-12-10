@@ -178,9 +178,9 @@
               'completed': day.completed,
               'today': day.isToday,
               'selected': day.dayNumber === currentDayNumber,
-              'disabled': day.isFuture
+              'disabled': day.isFuture && !day.isWithinRange
             }"
-            @click="!day.isFuture && selectDay(day.dayNumber)"
+            @click="(day.isFuture && day.isWithinRange) || !day.isFuture ? selectDay(day.dayNumber) : null"
           >
             <div class="day-number">{{ day.day }}</div>
             <div class="day-month">{{ day.monthShort }}</div>
@@ -384,6 +384,9 @@ function setCanvasRef(el, row, col) {
 
 const GAME_START_DATE = new Date(2024, 0, 1) // January 1, 2024
 
+// API URL for fetching daily words
+const API_URL = import.meta.env.VITE_API_URL || 'https://wordle-clone-api.narduk.workers.dev'
+
 function getDayNumber(date = new Date()) {
   const start = new Date(GAME_START_DATE)
   start.setHours(0, 0, 0, 0)
@@ -393,9 +396,23 @@ function getDayNumber(date = new Date()) {
   return Math.max(0, diff) // Never return negative
 }
 
-function getDailyWord(dayNumber = null) {
+async function getDailyWord(dayNumber = null) {
   const dayNum = dayNumber !== null ? dayNumber : getDayNumber()
   
+  // Try to fetch from database first
+  try {
+    const response = await fetch(`${API_URL}/api/daily-word?dayNumber=${dayNum}`)
+    if (response.ok) {
+      const data = await response.json()
+      if (data.word) {
+        return data.word.toUpperCase()
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to fetch daily word from API, using fallback:', error)
+  }
+  
+  // Fallback to old method if API fails
   if (!wordList.value || wordList.value.length === 0) {
     // Fallback if word list not loaded yet
     const fallback = ['APPLE', 'BEACH', 'CHAIR', 'DANCE', 'EARTH', 'FLAME', 'GLASS', 'HEART', 'IMAGE', 'JAZZY']
@@ -421,9 +438,17 @@ const calendarDays = computed(() => {
   const days = []
   const todayDate = new Date()
   
-  // Show last 30 days + today + next 7 days (for visual context)
-  for (let i = -30; i <= 7; i++) {
+  // Calculate 5 years from today in day numbers
+  const fiveYearsFromNow = new Date(todayDate)
+  fiveYearsFromNow.setFullYear(todayDate.getFullYear() + 5)
+  const maxDayNumber = getDayNumber(fiveYearsFromNow)
+  
+  // Show last 30 days + today + next 365 days (1 year ahead, since words are pre-populated for 5 years)
+  // Users can scroll or navigate to see more future days
+  for (let i = -30; i <= 365; i++) {
     const dayNum = today + i
+    if (dayNum < 0 || dayNum > maxDayNumber) continue // Skip invalid or beyond 5-year range
+    
     const date = dateFromDayNumber(dayNum)
     const gameData = playedGames.value[dayNum]
     
@@ -435,6 +460,7 @@ const calendarDays = computed(() => {
       date: date,
       isToday: dayNum === today,
       isFuture: dayNum > today,
+      isWithinRange: dayNum <= maxDayNumber, // Within the 5-year pre-populated range
       completed: gameData?.completed || false,
       attempts: gameData?.attempts || null
     })
@@ -858,7 +884,7 @@ function copyShareText() {
   })
 }
 
-function newGame(dayNumber = null) {
+async function newGame(dayNumber = null) {
   const dayNum = dayNumber !== null ? dayNumber : getDayNumber()
   
   // Don't allow playing completed games
@@ -883,7 +909,7 @@ function newGame(dayNumber = null) {
     }))
   )
   keyStates.value = {}
-  targetWord.value = getDailyWord(dayNum)
+  targetWord.value = await getDailyWord(dayNum)
   // Clear old saved state for this day
   localStorage.removeItem(`wordle_game_${dayNum}`)
   saveGameState()
@@ -1032,14 +1058,14 @@ onMounted(async () => {
     // Show calendar to pick a different day
     showCalendar.value = true
     // Still load today's word for display, but don't start the game
-    targetWord.value = getDailyWord(today)
+    targetWord.value = await getDailyWord(today)
   } else {
     // Try to load saved game state for today
     const hasSavedState = loadGameState(today)
     
     if (!hasSavedState) {
       // Fresh game - initialize today's game
-      targetWord.value = getDailyWord(today)
+      targetWord.value = await getDailyWord(today)
       board.value = Array(ROWS).fill(null).map(() => 
         Array(COLS).fill(null).map(() => ({ 
           letter: '', 
@@ -1057,7 +1083,7 @@ onMounted(async () => {
     } else {
       // If we loaded saved state, make sure target word is set
       if (!targetWord.value) {
-        targetWord.value = getDailyWord(today)
+        targetWord.value = await getDailyWord(today)
       }
     }
   }

@@ -5,69 +5,74 @@ import { RouterLink } from 'vue-router'
 <template>
   <section class="space-y-6">
     <div class="flex flex-col gap-3">
-      <p class="uppercase text-sm text-white/60">Gambling-themed prefix ladders</p>
-      <h1 class="text-4xl font-black tracking-tight text-white">Stack prefixes, grow the pot, and decide when to bail.</h1>
+      <p class="uppercase text-sm text-white/60">Word-building prefix game</p>
+      <h1 class="text-4xl font-black tracking-tight text-white">Build word chains by adding prefixes</h1>
       <p class="text-lg text-white/80 max-w-3xl">
-        PotPrefix is a single-player PWA built for quick two-tap turns on iPhone. Ante chips, pick a prefix letter,
-        and watch the pot climb with chain multipliers. Cash out before you bust, or keep pressing your luck for
-        neon-highlighted jackpots.
+        PotPrefix is a simple, addictive word game. Start with a seed word, then add letters as prefixes to build
+        longer and longer words. Each word in your chain earns points based on length and position. Build the longest
+        chain possible and beat your high score!
       </p>
       <div class="flex gap-3">
-        <RouterLink class="btn btn-primary" to="/game">Jump into the MVP</RouterLink>
+        <RouterLink class="btn btn-primary" to="/game">Start Playing</RouterLink>
         <RouterLink class="btn btn-ghost" to="/auth">Log in for sync</RouterLink>
       </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div class="stat-tile">
-        <p class="text-xs uppercase text-white/60">Bankroll</p>
-        <p class="text-2xl font-bold">Start with 1,000 chips</p>
-        <p class="text-sm text-white/60">Cloud-synced with D1 when authenticated.</p>
+        <p class="text-xs uppercase text-white/60">Scoring</p>
+        <p class="text-2xl font-bold">Points per word</p>
+        <p class="text-sm text-white/60">Base points × word length + chain bonus + rare letter bonus</p>
       </div>
       <div class="stat-tile">
-        <p class="text-xs uppercase text-white/60">Chain Multiplier</p>
-        <p class="text-2xl font-bold">x1.2 per link</p>
-        <p class="text-sm text-white/60">Rare letters hit x1.5; chain 10 triggers a jackpot.</p>
+        <p class="text-xs uppercase text-white/60">Chain Bonuses</p>
+        <p class="text-2xl font-bold">x1.5 at 5 words</p>
+        <p class="text-sm text-white/60">x2 at 10 words, x3 at 15 words</p>
       </div>
       <div class="stat-tile">
-        <p class="text-xs uppercase text-white/60">Flow</p>
-        <p class="text-2xl font-bold">2–3 taps</p>
-        <p class="text-sm text-white/60">Tap a letter, tap an ante, then "Risk It" or cash out.</p>
+        <p class="text-xs uppercase text-white/60">How to Play</p>
+        <p class="text-2xl font-bold">Tap & Build</p>
+        <p class="text-sm text-white/60">Tap a letter to preview, then build if valid</p>
       </div>
     </div>
 
     <div class="grid-card">
-      <div class="flex items-center justify-between gap-4">
-        <h2 class="text-2xl font-semibold">MVP checklist</h2>
-        <span class="text-xs uppercase text-white/60">1-week target</span>
+      <h2 class="text-2xl font-semibold mb-4">Example Game</h2>
+      <div class="space-y-3">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="text-sm text-white/60">Start:</span>
+          <span class="px-3 py-1 bg-white/10 rounded-lg font-mono">INK</span>
+          <span class="text-white/40">→</span>
+          <span class="px-3 py-1 bg-casino-neon/20 border border-casino-neon rounded-lg font-mono text-casino-neon">L + INK = LINK</span>
+          <span class="text-white/40">→</span>
+          <span class="px-3 py-1 bg-casino-neon/20 border border-casino-neon rounded-lg font-mono text-casino-neon">B + LINK = BLINK</span>
+          <span class="text-white/40">→</span>
+          <span class="px-3 py-1 bg-casino-neon/20 border border-casino-neon rounded-lg font-mono text-casino-neon">D + BLINK = DRINK</span>
+        </div>
+        <p class="text-sm text-white/60">
+          Each word in the chain earns points. Longer words and longer chains = higher scores!
+        </p>
       </div>
-      <ul class="space-y-2 text-white/80 list-disc list-inside">
-        <li>Endless mode with local bankroll, pots, and chain history.</li>
-        <li>Pinia store for ante math and Trie-based prefix validation.</li>
-        <li>Touch-friendly alphabet grid with neon previews and bust feedback.</li>
-        <li>Offline-first play; login hooks ready for D1 JWT endpoints.</li>
-        <li>Tailwind + Vite PWA shell optimized for iPhone taps and haptics.</li>
-      </ul>
     </div>
 
     <div class="grid-card">
-      <h2 class="text-2xl font-semibold">Game modes</h2>
+      <h2 class="text-2xl font-semibold mb-4">Game Features</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div class="stat-tile">
-          <h3 class="font-semibold text-lg">Endless</h3>
-          <p class="text-white/80">Keep pushing for bigger pots. Busting wipes the pot, not the bankroll.</p>
+          <h3 class="font-semibold text-lg mb-2">Simple Rules</h3>
+          <p class="text-white/80 text-sm">Just tap a letter, preview the word, and build if it's valid. No complex mechanics to learn.</p>
         </div>
         <div class="stat-tile">
-          <h3 class="font-semibold text-lg">Timed Rush</h3>
-          <p class="text-white/80">Two-minute sprints favor bold ante chains for leaderboard runs.</p>
+          <h3 class="font-semibold text-lg mb-2">Visual Feedback</h3>
+          <p class="text-white/80 text-sm">See your word chain grow in real-time. Valid letters are highlighted, invalid ones are clearly marked.</p>
         </div>
         <div class="stat-tile">
-          <h3 class="font-semibold text-lg">Zen</h3>
-          <p class="text-white/80">No losses—just pure prefix ladders and flow-state play.</p>
+          <h3 class="font-semibold text-lg mb-2">Score Tracking</h3>
+          <p class="text-white/80 text-sm">Track your score and high score. Challenge yourself to build longer chains!</p>
         </div>
         <div class="stat-tile">
-          <h3 class="font-semibold text-lg">Daily</h3>
-          <p class="text-white/80">Shared seeds with global top pots pulled from Cloudflare D1.</p>
+          <h3 class="font-semibold text-lg mb-2">Rare Letter Bonuses</h3>
+          <p class="text-white/80 text-sm">Words with Q, Z, J, or X earn bonus points. Use them strategically!</p>
         </div>
       </div>
     </div>
