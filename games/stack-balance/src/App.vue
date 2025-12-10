@@ -420,8 +420,8 @@ function dropBlock() {
     blockData: currentBlock.blockData,
     placed: false,
     settled: false,
-    lastPosition: { x: pos.x, y: pos.y, z: pos.z },
-    lastCheckTime: Date.now()
+    stableSince: null, // Track when block first became stable
+    lastPosition: { x: pos.x, y: pos.y, z: pos.z }
   })
 
   currentBlock = null
@@ -485,20 +485,25 @@ function checkStability() {
       // Block is settled if velocity is low AND position hasn't changed much
       // Use less strict thresholds for better detection
       if (velocity < 0.5 && positionChange < 0.05) {
-        // Double check: wait a bit more to ensure it's really settled
-        const timeSinceLastCheck = Date.now() - (obj.lastCheckTime || Date.now())
-        if (timeSinceLastCheck > 200) { // At least 200ms of stability
+        // Track when block first met stability conditions
+        if (!obj.stableSince) {
+          obj.stableSince = Date.now()
+        }
+        
+        // Check if it's been stable for at least 300ms
+        const stableDuration = Date.now() - obj.stableSince
+        if (stableDuration > 300) {
           obj.settled = true
           obj.placed = true
           if (!settledBlock) {
             settledBlock = obj
           }
         }
+      } else {
+        // Reset stability timer if conditions not met
+        obj.stableSince = null
       }
     }
-    
-    // Update last check time
-    obj.lastCheckTime = Date.now()
     
     // Update last position
     obj.lastPosition = { x: pos.x, y: pos.y, z: pos.z }
@@ -553,9 +558,12 @@ function checkStability() {
     
     // Reset canDrop flag and spawn next block
     canDrop = true
+    // Small delay to ensure physics has settled
     setTimeout(() => {
-      spawnNextBlock()
-    }, 500)
+      if (gameRunning) {
+        spawnNextBlock()
+      }
+    }, 300)
   }
 }
 
@@ -660,57 +668,80 @@ function handleTouchStart(e) {
   if (target && (target.classList.contains('stats-bar') || target.closest('.stats-bar'))) {
     return // Allow UI interactions
   }
-  e.preventDefault()
-  const touch = e.touches[0] || e
-  touchStartX = touch.clientX
-  touchStartY = touch.clientY
-  touchStartTime = Date.now()
-  isDragging = false
+  
+  if (e.touches && e.touches.length > 0) {
+    e.preventDefault()
+    const touch = e.touches[0]
+    touchStartX = touch.clientX
+    touchStartY = touch.clientY
+    touchStartTime = Date.now()
+    isDragging = false
+  } else if (e.clientX !== undefined) {
+    // Mouse event
+    touchStartX = e.clientX
+    touchStartY = e.clientY
+    touchStartTime = Date.now()
+    isDragging = false
+  }
 }
 
 function handleTouchMove(e) {
-  e.preventDefault()
-  const touch = e.touches[0] || e
+  if (!gameRunning || !currentBlock) return
+  
+  if (e.touches && e.touches.length > 0) {
+    e.preventDefault()
+  }
+  
+  const touch = (e.touches && e.touches.length > 0) ? e.touches[0] : e
   const deltaX = touch.clientX - touchStartX
   const deltaY = touch.clientY - touchStartY
   const deltaTime = Date.now() - touchStartTime
+  const totalDistance = Math.abs(deltaX) + Math.abs(deltaY)
 
   if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
     isDragging = true
   }
 
   // Prevent swipes if too frequent
-  if (Date.now() - lastSwipeTime < 100) return
+  if (Date.now() - lastSwipeTime < 150) return
 
-  // Detect swipe
-  if (deltaTime < 300 && Math.abs(deltaX) + Math.abs(deltaY) > 30) {
+  // Detect swipe - more lenient thresholds
+  if (deltaTime < 400 && totalDistance > 20) {
     const absX = Math.abs(deltaX)
     const absY = Math.abs(deltaY)
 
-    if (absX > absY) {
+    // Require minimum distance in primary direction
+    if (absX > absY && absX > 15) {
       // Horizontal swipe
       if (deltaX > 0) {
         rotateBlock('y', 90)
       } else {
         rotateBlock('y', -90)
       }
-    } else {
+      lastSwipeTime = Date.now()
+      // Reset touch start to prevent multiple rotations
+      touchStartX = touch.clientX
+      touchStartY = touch.clientY
+    } else if (absY > absX && absY > 15) {
       // Vertical swipe
       if (deltaY > 0) {
         rotateBlock('x', 90)
       } else {
         rotateBlock('x', -90)
       }
+      lastSwipeTime = Date.now()
+      // Reset touch start to prevent multiple rotations
+      touchStartX = touch.clientX
+      touchStartY = touch.clientY
     }
-
-    lastSwipeTime = Date.now()
-    touchStartX = touch.clientX
-    touchStartY = touch.clientY
   }
 }
 
 function handleTouchEnd(e) {
-  e.preventDefault()
+  if (e.changedTouches && e.changedTouches.length > 0) {
+    e.preventDefault()
+  }
+  
   // Handle both touch and mouse events
   let touch
   if (e.changedTouches && e.changedTouches.length > 0) {
@@ -726,7 +757,9 @@ function handleTouchEnd(e) {
   const deltaY = Math.abs(touch.clientY - touchStartY)
 
   // If not dragging and quick tap, drop block
-  if (!isDragging && deltaTime < 200 && deltaX < 10 && deltaY < 10) {
+  // Only drop if we didn't just rotate (check if last swipe was recent)
+  const timeSinceLastSwipe = Date.now() - lastSwipeTime
+  if (!isDragging && deltaTime < 250 && deltaX < 15 && deltaY < 15 && timeSinceLastSwipe > 100) {
     dropBlock()
   }
 
