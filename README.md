@@ -8,6 +8,7 @@ A monorepo containing all games by Narduk.
 - **[Lexi-Stack](./games/lexi-stack)** - A word-stacking puzzle game
 - **[Wordle Clone](./games/wordle-clone)** - A Wordle-inspired word guessing game
 - **[Stack & Balance](./games/stack-balance)** - A physics-based stacking game
+- **[PotPrefix](./games/potprefix)** - Gambling prefix word chains (potprefix.narduk.games)
 
 ## 🏗️ Monorepo Structure
 
@@ -42,6 +43,7 @@ Or install dependencies for a specific game:
 ```bash
 npm run install:lexi-stack
 npm run install:wordle-clone
+npm run install:potprefix
 ```
 
 ## 🛠️ Development
@@ -51,6 +53,7 @@ npm run install:wordle-clone
 npm run lexi-stack:dev
 npm run wordle-clone:dev
 npm run stack-balance:dev
+npm run potprefix:dev
 ```
 
 ### Build a specific game
@@ -58,6 +61,7 @@ npm run stack-balance:dev
 npm run lexi-stack:build
 npm run wordle-clone:build
 npm run stack-balance:build
+npm run potprefix:build
 ```
 
 ### Build all games
@@ -70,6 +74,7 @@ npm run build:all
 npm run lexi-stack:test
 npm run wordle-clone:test
 npm run stack-balance:test
+npm run potprefix:test
 npm run test:all
 ```
 
