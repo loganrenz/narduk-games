@@ -143,9 +143,10 @@ function initScene() {
   scene = new THREE.Scene()
   scene.background = new THREE.Color(0x87ceeb) // Sky blue
 
-  // Camera
+  // Camera - optimized for mobile visibility
   camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000)
-  camera.position.set(5, 8, 10)
+  // Better angle for mobile - closer and more overhead view
+  camera.position.set(6, 10, 8)
   camera.lookAt(0, 2, 0)
 
   // Renderer
@@ -339,7 +340,8 @@ function spawnNextBlock() {
   if (currentBlock && !canDrop) return
 
   const towerHeight = getTowerHeight()
-  const spawnHeight = Math.max(towerHeight + 3, 5)
+  // Spawn blocks at a visible height - not too high, not too low
+  const spawnHeight = Math.max(towerHeight + 2.5, 4)
 
   // Use nextBlockType for the current block, or random if not set
   const blockTypeToSpawn = nextBlockType.value || 'cube'
@@ -653,6 +655,11 @@ function addToast(message, type = 'info') {
 
 // Touch Controls
 function handleTouchStart(e) {
+  // Only prevent default if it's not a UI element
+  const target = e.target
+  if (target && (target.classList.contains('stats-bar') || target.closest('.stats-bar'))) {
+    return // Allow UI interactions
+  }
   e.preventDefault()
   const touch = e.touches[0] || e
   touchStartX = touch.clientX
@@ -810,11 +817,15 @@ function animate() {
     // Rotation is handled by updateBlockRotation when user rotates
   }
 
-  // Update camera to follow tower
+  // Update camera to follow tower - keep blocks visible and touchable
   const towerHeight = getTowerHeight()
-  const targetY = Math.max(towerHeight * 0.5 + 3, 5)
+  // Better camera follow - keep it at a good viewing angle
+  const targetY = Math.max(towerHeight * 0.6 + 4, 8)
+  const targetZ = 8 + towerHeight * 0.1 // Move camera back slightly as tower grows
   camera.position.y += (targetY - camera.position.y) * 0.05
-  camera.lookAt(0, towerHeight * 0.3, 0)
+  camera.position.z += (targetZ - camera.position.z) * 0.05
+  // Look at a point above the tower base to keep blocks in view
+  camera.lookAt(0, towerHeight * 0.4 + 1, 0)
 
   renderer.render(scene, camera)
 }
@@ -831,8 +842,10 @@ onMounted(() => {
       startGame()
     }
 
-    // Event Listeners
+    // Event Listeners - attach to container for better touch handling
     const container = canvasContainer.value
+    // Use capture phase to ensure we get events even if UI elements are on top
+    // But only on the canvas container, not document, to avoid conflicts
     container.addEventListener('touchstart', handleTouchStart, { passive: false })
     container.addEventListener('touchmove', handleTouchMove, { passive: false })
     container.addEventListener('touchend', handleTouchEnd, { passive: false })
@@ -849,6 +862,17 @@ onUnmounted(() => {
   }
   window.removeEventListener('resize', onWindowResize)
   window.removeEventListener('keydown', handleKeyDown)
+  
+  // Remove container event listeners
+  const container = canvasContainer.value
+  if (container) {
+    container.removeEventListener('touchstart', handleTouchStart)
+    container.removeEventListener('touchmove', handleTouchMove)
+    container.removeEventListener('touchend', handleTouchEnd)
+    container.removeEventListener('mousedown', handleMouseDown)
+    container.removeEventListener('mousemove', handleMouseMove)
+    container.removeEventListener('mouseup', handleMouseUp)
+  }
 })
 </script>
 
