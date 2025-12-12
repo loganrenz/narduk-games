@@ -7,28 +7,43 @@ describe('usePotStore', () => {
     setActivePinia(createPinia())
   })
 
-  it('starts with bankroll and seed', () => {
+  it('starts with a seed word and empty chain', () => {
     const store = usePotStore()
-    expect(store.bankroll).toBeGreaterThan(0)
+    expect(store.score).toBe(0)
+    expect(store.chain.length).toBe(0)
     expect(store.currentWord.length).toBeGreaterThanOrEqual(3)
+    expect(store.gameMode).toBe('endless')
+    expect(store.gameOver).toBe(false)
   })
 
-  it('applies ante to pot when preview is valid', () => {
+  it('builds a word when preview is valid', () => {
     const store = usePotStore()
     store.reset('INK')
-    store.tryPrefix('L')
-    const success = store.riskAnte(50)
+    expect(store.tryPrefix('L')).toBe(true)
+
+    const success = store.buildWord()
     expect(success).toBe(true)
-    expect(store.pot).toBeGreaterThan(0)
+    expect(store.currentWord).toBe('LINK')
     expect(store.chain.at(-1)).toBe('LINK')
+    expect(store.score).toBeGreaterThan(0)
+    expect(store.selectedLetter).toBe(null)
   })
 
-  it('prevents risking when preview is invalid', () => {
+  it('does not build a word when preview is invalid', () => {
     const store = usePotStore()
     store.reset('INK')
-    store.tryPrefix('V') // not in sample trie
-    const success = store.riskAnte(50)
+    const invalidLetter = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+      .split('')
+      .find(l => store.tryPrefix(l) === false)
+
+    // The bundled trie should have at least one invalid prefix for a given seed;
+    // if that ever changes, this test should be revisited.
+    expect(invalidLetter).toBeTruthy()
+
+    const success = store.buildWord()
     expect(success).toBe(false)
-    expect(store.pot).toBe(0)
+    expect(store.chain.length).toBe(0)
+    expect(store.currentWord).toBe('INK')
+    expect(store.score).toBe(0)
   })
 })

@@ -472,7 +472,7 @@ const calendarDays = computed(() => {
 async function loadWordList() {
   try {
     // Load dictionary.json (same as lexi-stack)
-    const response = await fetch('/dictionary.json')
+    const response = await fetch(`${import.meta.env.BASE_URL}dictionary.json`)
     if (response.ok) {
       const dict = await response.json()
       // Filter for 5-letter words and convert to uppercase

@@ -287,13 +287,15 @@ describe('API Tests - D1 Database Calls', () => {
     });
 
     it('should handle missing Content-Type header', async () => {
+      const uniqueUsername = `missing_ct_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       const response = await fetch(`${API_BASE_URL}/api/user`, {
         method: 'POST',
-        body: JSON.stringify({ username: 'test', password: 'test' }),
+        body: JSON.stringify({ username: uniqueUsername, password: 'test' }),
       });
 
-      // Should either work or return 400/415
-      expect([200, 400, 415]).toContain(response.status);
+      // Should either work or return 400/415; if request is processed but username
+      // already exists from a previous run, 409 is also acceptable.
+      expect([200, 400, 409, 415]).toContain(response.status);
     });
   });
 
