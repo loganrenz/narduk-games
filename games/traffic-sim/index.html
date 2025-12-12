@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signal Stream - Narduk Traffic Sim</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1017;
+      --panel: rgba(255, 255, 255, 0.04);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --accent: #7c3aed;
+      --accent-2: #22c55e;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      --card-radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.18), transparent 25%),
+                  radial-gradient(circle at 90% 20%, rgba(34, 197, 94, 0.16), transparent 28%),
+                  radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.16), transparent 30%),
+                  var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 32px clamp(16px, 5vw, 64px);
+      display: flex;
+      justify-content: center;
+    }
+
+    .layout {
+      width: min(1200px, 100%);
+      display: grid;
+      gap: 20px;
+    }
+
+    header {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--card-radius);
+      padding: 20px 24px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .title {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(124, 58, 237, 0.15);
+      color: #d8b4fe;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2vw, 1.8rem);
+      letter-spacing: -0.02em;
+    }
+
+    p { margin: 0; color: var(--muted); }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .control {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+      min-width: 200px;
+    }
+
+    .control label {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .control strong { font-size: 0.95rem; }
+
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+    .board {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--card-radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    #simCanvas {
+      width: 100%;
+      height: 420px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)), #0b0e14;
+      border-radius: 12px;
+      border: 1px solid var(--panel-border);
+      display: block;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .stat-label { color: var(--muted); font-size: 0.9rem; }
+    .stat-value { font-size: 1.2rem; font-weight: 700; }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; background: rgba(255,255,255,0.04); border-radius: 999px; border: 1px solid var(--panel-border); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+    @media (max-width: 680px) {
+      header { flex-direction: column; align-items: flex-start; }
+      .controls { width: 100%; }
+      .control { width: 100%; }
+      body { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="layout">
+    <header>
+      <div class="title">
+        <span class="badge">new</span>
+        <div>
+          <h1>Signal Stream</h1>
+          <p>One-way arterial traffic with adaptive queueing and timed lights.</p>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="control">
+          <label for="arrivalRate">Arrivals (cars/min)</label>
+          <input id="arrivalRate" type="range" min="6" max="40" step="1" value="18" />
+          <strong><span id="arrivalValue">18</span> cars / min</strong>
+        </div>
+        <div class="control">
+          <label for="speedControl">Cruise speed</label>
+          <input id="speedControl" type="range" min="90" max="210" step="5" value="150" />
+          <strong><span id="speedValue">150</span> px/s</strong>
+        </div>
+      </div>
+    </header>
+
+    <section class="board">
+      <canvas id="simCanvas"></canvas>
+      <div class="legend">
+        <span class="pill"><span class="dot" style="background:#22c55e"></span> Green phase (30s)</span>
+        <span class="pill"><span class="dot" style="background:#f59e0b"></span> Yellow phase (3s)</span>
+        <span class="pill"><span class="dot" style="background:#ef4444"></span> Red phase (30s)</span>
+        <span class="pill"><span class="dot" style="background:#60a5fa"></span> Vehicles in motion</span>
+        <span class="pill"><span class="dot" style="background:#9ca3af"></span> Queued vehicles</span>
+      </div>
+      <div class="stats" id="stats"></div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const statsEl = document.getElementById('stats');
+    const arrivalInput = document.getElementById('arrivalRate');
+    const speedInput = document.getElementById('speedControl');
+    const arrivalValue = document.getElementById('arrivalValue');
+    const speedValue = document.getElementById('speedValue');
+
+    let width = 0, height = 0;
+    const road = {
+      length: 920,
+      stopLine: 650,
+      laneY: 220
+    };
+
+    const lightPhases = [
+      { state: 'green', duration: 30, color: '#22c55e' },
+      { state: 'yellow', duration: 3, color: '#f59e0b' },
+      { state: 'red', duration: 30, color: '#ef4444' },
+    ];
+
+    let lightTimer = 0;
+    let phaseIndex = 0;
+    let cars = [];
+    let lastTime = performance.now();
+    let nextSpawn = 0;
+
+    const stats = {
+      completed: 0,
+      totalWait: 0,
+      maxQueue: 0,
+      time: 0,
+      throughputHistory: [],
+    };
+
+    class Car {
+      constructor() {
+        this.length = 42;
+        this.x = -this.length - 10;
+        this.y = road.laneY;
+        this.speed = 0;
+        this.maxSpeed = parseFloat(speedInput.value);
+        this.color = this.randomColor();
+        this.spawnedAt = stats.time;
+        this.waitStart = null;
+        this.waited = 0;
+      }
+
+      randomColor() {
+        const palette = ['#60a5fa', '#38bdf8', '#22d3ee', '#a5b4fc'];
+        return palette[Math.floor(Math.random() * palette.length)];
+      }
+
+      update(dt, leadCar, light) {
+        this.maxSpeed = parseFloat(speedInput.value);
+        const spacing = 18;
+        let targetSpeed = this.maxSpeed;
+
+        if (leadCar) {
+          const gap = (leadCar.x - leadCar.length) - this.x;
+          if (gap < spacing * 1.2) targetSpeed = 0;
+          else if (gap < spacing * 3) targetSpeed = Math.min(targetSpeed, gap * 2);
+        }
+
+        const approachingStop = this.x + this.length + 8 >= road.stopLine;
+        const canProceed = light.state === 'green' || (light.state === 'yellow' && approachingStop && this.speed > 20);
+        if (!canProceed && approachingStop) {
+          targetSpeed = 0;
+          this.x = Math.min(this.x, road.stopLine - this.length - 6);
+        }
+
+        // Smooth acceleration/braking
+        const accel = 4;
+        this.speed += (targetSpeed - this.speed) * Math.min(1, dt * accel);
+        this.speed = Math.max(0, this.speed);
+        this.x += this.speed * dt;
+
+        if (this.speed < 2 && this.waitStart === null) this.waitStart = stats.time;
+        if (this.speed > 2 && this.waitStart !== null) {
+          this.waited += stats.time - this.waitStart;
+          this.waitStart = null;
+        }
+      }
+    }
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      width = rect.width * devicePixelRatio;
+      height = rect.height * devicePixelRatio;
+      canvas.width = width;
+      canvas.height = height;
+      road.laneY = height / 2;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function drawRoad(light) {
+      ctx.save();
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+      ctx.clearRect(0, 0, width, height);
+
+      const displayWidth = width / devicePixelRatio;
+
+      // Road base
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(20, road.laneY - 34, displayWidth - 40, 68);
+
+      // Lane markers
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.setLineDash([12, 12]);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(20, road.laneY);
+      ctx.lineTo(displayWidth - 20, road.laneY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Stop line
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      const stopX = (road.stopLine / road.length) * (displayWidth - 120) + 60;
+      ctx.fillRect(stopX, road.laneY - 36, 6, 72);
+
+      // Light housing
+      ctx.fillStyle = 'rgba(15,23,42,0.8)';
+      ctx.fillRect(stopX + 16, road.laneY - 50, 24, 100);
+
+      // Light lenses
+      const states = ['red', 'yellow', 'green'];
+      const colors = { red: '#ef4444', yellow: '#f59e0b', green: '#22c55e' };
+      states.forEach((state, i) => {
+        const radius = 8;
+        const y = road.laneY - 32 + i * 24;
+        ctx.beginPath();
+        ctx.arc(stopX + 28, y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = state === light.state ? colors[state] : 'rgba(255,255,255,0.12)';
+        ctx.shadowColor = state === light.state ? colors[state] : 'transparent';
+        ctx.shadowBlur = state === light.state ? 12 : 0;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+    }
+
+    function drawCars() {
+      ctx.save();
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+      const displayWidth = width / devicePixelRatio;
+      const pxPerUnit = (displayWidth - 120) / road.length;
+
+      cars.forEach((car) => {
+        const isQueued = car.speed < 2;
+        const carX = 60 + car.x * pxPerUnit;
+        const carW = Math.max(24, car.length * pxPerUnit);
+        const carY = road.laneY - 14;
+
+        ctx.fillStyle = isQueued ? 'rgba(156,163,175,0.9)' : car.color;
+        ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(carX, carY, carW, 28, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        // headlights
+        ctx.fillStyle = isQueued ? 'rgba(255,255,255,0.35)' : 'rgba(244,244,245,0.9)';
+        ctx.fillRect(carX + carW - 6, carY + 6, 4, 4);
+        ctx.fillRect(carX + carW - 6, carY + 18, 4, 4);
+      });
+      ctx.restore();
+    }
+
+    function formatTime(seconds) {
+      return seconds.toFixed(1) + 's';
+    }
+
+    function renderStats(light) {
+      const queue = cars.filter(c => c.speed < 2 && c.x < road.stopLine + 5).length;
+      stats.maxQueue = Math.max(stats.maxQueue, queue);
+      const avgWait = stats.completed ? (stats.totalWait / stats.completed) : 0;
+      const throughput = stats.throughputHistory.slice(-60).reduce((a,b) => a+b, 0) / (stats.throughputHistory.length ? stats.throughputHistory.length : 1);
+
+      statsEl.innerHTML = `
+        <div class="stat-card">
+          <span class="stat-label">Signal phase</span>
+          <span class="stat-value" style="color:${light.color}">${light.state.toUpperCase()}</span>
+          <small class="stat-label">${formatTime(light.remaining)} left</small>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Queue length</span>
+          <span class="stat-value">${queue} cars</span>
+          <small class="stat-label">Peak ${stats.maxQueue}</small>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Completed</span>
+          <span class="stat-value">${stats.completed}</span>
+          <small class="stat-label">Avg wait ${formatTime(avgWait)}</small>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Throughput</span>
+          <span class="stat-value">${throughput.toFixed(2)} cars/s</span>
+          <small class="stat-label">Rolling 60s</small>
+        </div>
+      `;
+    }
+
+    function step(timestamp) {
+      const dt = Math.min(0.05, (timestamp - lastTime) / 1000);
+      lastTime = timestamp;
+      stats.time += dt;
+
+      // Update light
+      lightTimer += dt;
+      let current = lightPhases[phaseIndex];
+      if (lightTimer >= current.duration) {
+        lightTimer = 0;
+        phaseIndex = (phaseIndex + 1) % lightPhases.length;
+        current = lightPhases[phaseIndex];
+      }
+      const remaining = current.duration - lightTimer;
+
+      // Spawn logic (Poisson process)
+      if (stats.time >= nextSpawn) {
+        cars.push(new Car());
+        const rate = parseFloat(arrivalInput.value) / 60; // per second
+        const interval = -Math.log(Math.random()) / rate;
+        nextSpawn = stats.time + interval;
+      }
+
+      // Update cars
+      let lead = null;
+      for (let i = cars.length - 1; i >= 0; i--) {
+        const car = cars[i];
+        car.update(dt, lead, { state: current.state, remaining });
+        if (car.x - car.length > road.length) {
+          const waited = car.waited + (car.waitStart ? stats.time - car.waitStart : 0);
+          stats.completed += 1;
+          stats.totalWait += waited;
+          stats.throughputHistory.push(1 / Math.max(dt, 0.01));
+          cars.splice(i, 1);
+          continue;
+        }
+        lead = car;
+      }
+
+      drawRoad({ state: current.state, color: current.color });
+      drawCars();
+      renderStats({ ...current, remaining });
+
+      requestAnimationFrame(step);
+    }
+
+    arrivalInput.addEventListener('input', () => {
+      arrivalValue.textContent = arrivalInput.value;
+    });
+    speedInput.addEventListener('input', () => {
+      speedValue.textContent = speedInput.value;
+    });
+
+    arrivalValue.textContent = arrivalInput.value;
+    speedValue.textContent = speedInput.value;
+    requestAnimationFrame(step);
+  </script>
+</body>
+</html>
