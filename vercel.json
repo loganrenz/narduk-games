@@ -156,6 +156,10 @@
       ]
     },
     {
+      "source": "/traffic-bench/(.*)",
+      "destination": "/games/traffic-bench/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/games/lexi-stack/dist/$1",
       "has": [
