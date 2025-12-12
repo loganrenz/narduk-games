@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Flow Simulation - Gemini 3 Pro Preview</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #info {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 16px;
+            border-radius: 8px;
+            pointer-events: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        h1 {
+            font-size: 1.1rem;
+            margin: 0 0 4px 0;
+            font-weight: 600;
+        }
+        p {
+            font-size: 0.9rem;
+            margin: 0;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h1>Traffic Flow Simulation</h1>
+        <p>Gemini 3 Pro Preview</p>
+    </div>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        /**
+         * Traffic Simulation
+         * 
+         * Demonstrates basic traffic flow mechanics on a one-way street with a traffic light.
+         * Features:
+         * - IDM-inspired car following model (Intelligent Driver Model)
+         * - Traffic light state machine
+         * - Canvas rendering
+         */
+
+        // --- Configuration ---
+        const CONFIG = {
+            laneCount: 1,
+            laneWidth: 60,
+            roadY: 0.5, // Relative to canvas height
+            stopLineOffset: 0.7, // Relative to canvas width
+            spawnRate: 1500, // ms
+            lightDurations: {
+                green: 6000,
+                yellow: 2500,
+                red: 5000
+            },
+            car: {
+                length: 40,
+                width: 24,
+                maxSpeed: 300, // px/s
+                maxAccel: 150, // px/s^2
+                maxBrake: 300, // px/s^2
+                minGap: 20, // px
+                headway: 1.5 // s
+            }
+        };
+
+        // --- Types (JSDoc) ---
+        
+        /**
+         * @typedef {'green' | 'yellow' | 'red'} LightState
+         */
+
+        // --- Classes ---
+
+        class TrafficLight {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                /** @type {LightState} */
+                this.state = 'green';
+                this.timer = 0;
+            }
+
+            update(dt) {
+                this.timer += dt;
+                const duration = CONFIG.lightDurations[this.state];
+                
+                if (this.timer >= duration) {
+                    this.timer = 0;
+                    this.cycle();
+                }
+            }
+
+            cycle() {
+                switch (this.state) {
+                    case 'green': this.state = 'yellow'; break;
+                    case 'yellow': this.state = 'red'; break;
+                    case 'red': this.state = 'green'; break;
+                }
+            }
+
+            draw(ctx) {
+                // Draw pole
+                ctx.fillStyle = '#444';
+                ctx.fillRect(this.x - 5, this.y - 100, 10, 100);
+
+                // Draw housing
+                ctx.fillStyle = '#111';
+                ctx.fillRect(this.x - 15, this.y - 100, 30, 90);
+
+                // Draw lights
+                this.drawLight(ctx, this.x, this.y - 85, 'red', this.state === 'red');
+                this.drawLight(ctx, this.x, this.y - 55, 'yellow', this.state === 'yellow');
+                this.drawLight(ctx, this.x, this.y - 25, '#0f0', this.state === 'green');
+            }
+
+            drawLight(ctx, x, y, color, active) {
+                ctx.beginPath();
+                ctx.arc(x, y, 10, 0, Math.PI * 2);
+                ctx.fillStyle = active ? color : '#333';
+                ctx.fill();
+                
+                if (active) {
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = 15;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            }
+        }
+
+        class Car {
+            constructor(id, x, y) {
+                this.id = id;
+                this.x = x;
+                this.y = y;
+                this.width = CONFIG.car.length;
+                this.height = CONFIG.car.width;
+                this.color = `hsl(${Math.random() * 360}, 70%, 60%)`;
+                
+                this.speed = CONFIG.car.maxSpeed * (0.8 + Math.random() * 0.4); // Variation
+                this.currentSpeed = this.speed;
+                this.acceleration = 0;
+            }
+
+            /**
+             * Update car physics
+             * @param {number} dt Time delta in seconds
+             * @param {Car | null} carAhead
+             * @param {TrafficLight} light
+             * @param {number} stopLineX
+             */
+            update(dt, carAhead, light, stopLineX) {
+                // Intelligent Driver Model (simplified)
+                
+                // 1. Determine target distance and delta speed
+                let distToObstacle = Infinity;
+                let speedOfObstacle = 0; // Stationary by default
+
+                // Check car ahead
+                if (carAhead) {
+                    const dist = carAhead.x - this.x - this.width;
+                    if (dist < distToObstacle) {
+                        distToObstacle = dist;
+                        speedOfObstacle = carAhead.currentSpeed;
+                    }
+                }
+
+                // Check traffic light
+                // Only respect light if we are behind the stop line and light is not green
+                const distToStop = stopLineX - this.x - this.width;
+                if (light.state !== 'green' && distToStop > -this.width && distToStop < 400) {
+                    // If yellow, only stop if we can comfortably do so (simplified check)
+                    const canStop = distToStop > 50 || light.state === 'red';
+                    
+                    if (canStop && distToStop < distToObstacle) {
+                        distToObstacle = distToStop;
+                        speedOfObstacle = 0;
+                    }
+                }
+
+                // Calculate acceleration
+                const s = Math.max(0, distToObstacle);
+                const v = this.currentSpeed;
+                const v0 = this.speed;
+                const T = CONFIG.car.headway;
+                const s0 = CONFIG.car.minGap;
+                const a = CONFIG.car.maxAccel;
+                const b = CONFIG.car.maxBrake;
+                const deltaV = v - speedOfObstacle;
+
+                // IDM formula
+                const sStar = s0 + v * T + (v * deltaV) / (2 * Math.sqrt(a * b));
+                const acc = a * (1 - Math.pow(v / v0, 4) - Math.pow(sStar / s, 2));
+
+                this.acceleration = acc;
+                this.currentSpeed += this.acceleration * dt;
+                
+                // Constraints
+                this.currentSpeed = Math.max(0, this.currentSpeed);
+                this.x += this.currentSpeed * dt;
+            }
+
+            draw(ctx) {
+                ctx.fillStyle = this.color;
+                
+                // Car body
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Shadow
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = 10;
+                ctx.shadowOffsetY = 5;
+                
+                // Main body
+                ctx.beginPath();
+                ctx.roundRect(0, -this.height/2, this.width, this.height, 6);
+                ctx.fill();
+                ctx.shadowBlur = 0; // Reset shadow
+
+                // Windshield
+                ctx.fillStyle = '#333';
+                ctx.fillRect(this.width * 0.6, -this.height/2 + 2, this.width * 0.2, this.height - 4);
+                
+                // Headlights
+                ctx.fillStyle = '#ffeba1';
+                ctx.beginPath();
+                ctx.arc(this.width - 2, -this.height/3, 3, 0, Math.PI*2);
+                ctx.arc(this.width - 2, this.height/3, 3, 0, Math.PI*2);
+                ctx.fill();
+                
+                // Taillights
+                ctx.fillStyle = '#ff4444';
+                ctx.beginPath();
+                ctx.arc(2, -this.height/3, 3, 0, Math.PI*2);
+                ctx.arc(2, this.height/3, 3, 0, Math.PI*2);
+                ctx.fill();
+
+                // Brake lights glow
+                if (this.acceleration < -10) {
+                    ctx.shadowColor = '#ff0000';
+                    ctx.shadowBlur = 10;
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        class Simulation {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
+                
+                this.cars = [];
+                this.lastSpawnTime = 0;
+                this.carIdCounter = 0;
+                
+                this.resize();
+                
+                // Setup elements
+                const roadY = this.height * CONFIG.roadY;
+                const stopX = this.width * CONFIG.stopLineOffset;
+                this.trafficLight = new TrafficLight(stopX, roadY - CONFIG.laneWidth/2 - 20);
+                
+                window.addEventListener('resize', () => this.resize());
+                
+                this.lastTime = performance.now();
+                this.loop = this.loop.bind(this);
+                requestAnimationFrame(this.loop);
+            }
+
+            resize() {
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+                
+                // Update positions if needed
+                if (this.trafficLight) {
+                    this.trafficLight.x = this.width * CONFIG.stopLineOffset;
+                    this.trafficLight.y = this.height * CONFIG.roadY - CONFIG.laneWidth/2 - 20;
+                }
+            }
+
+            spawnCar() {
+                const roadY = this.height * CONFIG.roadY;
+                // Add jitter to spawn position
+                const startX = -100 - Math.random() * 50;
+                const car = new Car(this.carIdCounter++, startX, roadY);
+                this.cars.push(car);
+            }
+
+            update(dt) {
+                // Spawn logic
+                if (performance.now() - this.lastSpawnTime > CONFIG.spawnRate) {
+                    // Only spawn if safe (simple check)
+                    const lastCar = this.cars[this.cars.length - 1];
+                    if (!lastCar || lastCar.x > 50) {
+                        this.spawnCar();
+                        this.lastSpawnTime = performance.now();
+                        // Randomize next spawn rate slightly
+                        CONFIG.spawnRate = 1200 + Math.random() * 1000;
+                    }
+                }
+
+                // Update light
+                this.trafficLight.update(dt);
+
+                // Update cars
+                const stopLineX = this.trafficLight.x;
+                
+                // Sort cars by position (descending x) to find "car ahead" easily
+                // Though in this simple 1-lane sim, push order is mostly correct.
+                // But if cars overtake (not implemented here), we'd need sorting.
+                
+                for (let i = 0; i < this.cars.length; i++) {
+                    const car = this.cars[i];
+                    // Find car immediately ahead
+                    // Since cars are spawned in order and don't overtake, car[i-1] is ahead of car[i]
+                    // (Assuming index 0 is oldest/furthest car)
+                    const carAhead = i > 0 ? this.cars[i - 1] : null;
+                    
+                    car.update(dt, carAhead, this.trafficLight, stopLineX);
+                }
+
+                // Remove cars that have left the screen
+                this.cars = this.cars.filter(c => c.x < this.width + 200);
+            }
+
+            draw() {
+                // Clear
+                this.ctx.fillStyle = '#222';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+
+                const roadY = this.height * CONFIG.roadY;
+                const halfWidth = CONFIG.laneWidth / 2;
+
+                // Draw Road
+                this.ctx.fillStyle = '#333';
+                this.ctx.fillRect(0, roadY - halfWidth - 10, this.width, CONFIG.laneWidth + 20); // Shoulder
+                this.ctx.fillStyle = '#444';
+                this.ctx.fillRect(0, roadY - halfWidth, this.width, CONFIG.laneWidth); // Road surface
+
+                // Markings
+                this.ctx.strokeStyle = '#fff';
+                this.ctx.setLineDash([20, 30]);
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, roadY);
+                this.ctx.lineTo(this.width, roadY);
+                // this.ctx.stroke(); // Center line (for 2 lanes, but we have 1 way)
+                
+                // Edges
+                this.ctx.setLineDash([]);
+                this.ctx.lineWidth = 4;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, roadY - halfWidth);
+                this.ctx.lineTo(this.width, roadY - halfWidth);
+                this.ctx.moveTo(0, roadY + halfWidth);
+                this.ctx.lineTo(this.width, roadY + halfWidth);
+                this.ctx.stroke();
+
+                // Stop line
+                const stopX = this.trafficLight.x;
+                this.ctx.strokeStyle = '#fff';
+                this.ctx.lineWidth = 6;
+                this.ctx.beginPath();
+                this.ctx.moveTo(stopX, roadY - halfWidth);
+                this.ctx.lineTo(stopX, roadY + halfWidth);
+                this.ctx.stroke();
+
+                // Draw Light
+                this.trafficLight.draw(this.ctx);
+
+                // Draw Cars
+                this.cars.forEach(car => car.draw(this.ctx));
+            }
+
+            loop(timestamp) {
+                const dt = Math.min((timestamp - this.lastTime) / 1000, 0.1); // Cap dt
+                this.lastTime = timestamp;
+
+                this.update(dt * 1000); // Pass ms to update if needed? No, logic uses seconds for physics usually
+                // Logic uses seconds in update: `speed * dt`.
+                // But update function takes dt. The classes use seconds.
+                // Wait, update(dt) passed `dt` (seconds).
+                // Let's check update() signature again.
+                // `update(dt)`: `this.timer += dt` (timer is in ms usually?).
+                // `CONFIG.lightDurations` are in ms.
+                // So TrafficLight needs dt in ms.
+                // `Car.update` uses `currentSpeed * dt`. Speed is px/s. So dt should be seconds.
+                
+                // Correction:
+                // TrafficLight timer logic needs ms.
+                // Car logic needs seconds.
+                
+                // Let's pass seconds to everything for consistency, but adjust TrafficLight config or conversion.
+                // `CONFIG.lightDurations` = 6000 (6s).
+                // If I pass seconds to TrafficLight, I should convert duration or dt.
+                // Let's pass ms to TrafficLight update and seconds to Car update.
+
+                this.trafficLight.update(dt * 1000);
+                
+                // Car update
+                // Re-sort logic: cars[0] is oldest (spawned first). 
+                // In my spawnCar: `this.cars.push(car)`.
+                // So cars[0] is the one furthest to the right.
+                // cars[1] is behind cars[0].
+                // So when updating cars[i], `carAhead` is cars[i-1].
+                // Wait.
+                // cars = [Oldest/Furthest, ..., Newest/ClosestToStart]
+                // i=0: Car 0. Ahead? None.
+                // i=1: Car 1. Ahead? Car 0.
+                // Correct.
+                // Loop should be correct.
+                
+                for (let i = 0; i < this.cars.length; i++) {
+                    const car = this.cars[i];
+                    const carAhead = i > 0 ? this.cars[i - 1] : null;
+                    // BUT: if i=0 (leader), carAhead is null.
+                    // This logic assumes `this.cars[0]` is the LEADER.
+                    // `cars.push` adds to end.
+                    // `filter` keeps order.
+                    // Yes, index 0 is oldest.
+                    // So index 1 is BEHIND index 0.
+                    // So `carAhead` for `cars[1]` should be `cars[0]`.
+                    
+                    // My loop:
+                    // i=0: carAhead = null. Correct (leader).
+                    // i=1: carAhead = cars[0]. Correct.
+                    car.update(dt, carAhead, this.trafficLight, this.trafficLight.x);
+                }
+                
+                // Filter
+                this.cars = this.cars.filter(c => c.x < this.width + 200);
+
+                this.draw();
+                
+                requestAnimationFrame(this.loop);
+            }
+        }
+
+        // Start
+        window.onload = () => {
+            new Simulation();
+        };
+
+    </script>
+</body>
+</html>
