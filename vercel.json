@@ -137,6 +137,16 @@
       ]
     },
     {
+      "source": "/traffic-bench/",
+      "destination": "/games/traffic-bench/dist/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    },
+    {
       "source": "/traffic-bench/(.*)",
       "destination": "/games/traffic-bench/dist/$1",
       "has": [
@@ -155,6 +165,10 @@
           "value": "games.nard.uk"
         }
       ]
+    },
+    {
+      "source": "/traffic-bench/",
+      "destination": "/games/traffic-bench/dist/index.html"
     },
     {
       "source": "/traffic-bench/(.*)",
