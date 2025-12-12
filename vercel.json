@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
+  "framework": null,
   "buildCommand": "npm run install:all && npm run build:all:subdir",
   "installCommand": "echo 'Dependencies installed in build'",
   "outputDirectory": ".",
@@ -157,7 +158,64 @@
     },
     {
       "source": "/traffic-bench/(.*)",
-      "destination": "/games/traffic-bench/$1"
+      "destination": "/games/traffic-bench/dist/$1"
+    },
+
+    {
+      "source": "/lexistack/(.*)",
+      "destination": "/games/lexi-stack/dist/$1"
+    },
+    {
+      "source": "/lexistack",
+      "destination": "/games/lexi-stack/dist/index.html"
+    },
+    {
+      "source": "/wordle/(.*)",
+      "destination": "/games/wordle-clone/dist/$1"
+    },
+    {
+      "source": "/wordle",
+      "destination": "/games/wordle-clone/dist/index.html"
+    },
+    {
+      "source": "/dictionary.json",
+      "destination": "/games/wordle-clone/dist/dictionary.json"
+    },
+    {
+      "source": "/stack-balance/(.*)",
+      "destination": "/games/stack-balance/dist/$1"
+    },
+    {
+      "source": "/stack-balance",
+      "destination": "/games/stack-balance/dist/index.html"
+    },
+    {
+      "source": "/2048/(.*)",
+      "destination": "/games/2048-clone/dist/$1"
+    },
+    {
+      "source": "/2048",
+      "destination": "/games/2048-clone/dist/index.html"
+    },
+    {
+      "source": "/potprefix/(.*)",
+      "destination": "/games/potprefix/dist/$1"
+    },
+    {
+      "source": "/potprefix",
+      "destination": "/games/potprefix/dist/index.html"
+    },
+    {
+      "source": "/tapweave/(.*)",
+      "destination": "/games/tapweave/dist/$1"
+    },
+    {
+      "source": "/tapweave",
+      "destination": "/games/tapweave/dist/index.html"
+    },
+    {
+      "source": "/traffic-bench",
+      "destination": "/games/traffic-bench/dist/index.html"
     },
     {
       "source": "/(.*)",
@@ -248,6 +306,10 @@
           "value": "games.nard.uk"
         }
       ]
+    },
+    {
+      "source": "/",
+      "destination": "/index.html"
     }
   ],
   "headers": [
