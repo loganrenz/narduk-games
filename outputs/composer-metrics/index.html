@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Light Simulation - Metrics</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        h1 {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .canvas-container {
+            flex: 1;
+            min-width: 400px;
+        }
+        canvas {
+            border: 3px solid #333;
+            border-radius: 10px;
+            display: block;
+            background: #2d5016;
+            width: 100%;
+        }
+        .metrics-panel {
+            min-width: 250px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        .metrics-panel h2 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+        .metric {
+            margin: 10px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        .metric-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        .controls {
+            margin-top: 15px;
+            text-align: center;
+            width: 100%;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .explanation {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            font-size: 12px;
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚦 Traffic Light Simulation - Metrics & Education</h1>
+    <div class="container">
+        <div class="canvas-container">
+            <canvas id="canvas" width="600" height="400"></canvas>
+            <div class="controls">
+                <button id="toggleBtn">Pause</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+        </div>
+        <div class="metrics-panel">
+            <h2>📊 Live Metrics</h2>
+            <div class="metric">
+                <div class="metric-label">Cars Passed</div>
+                <div class="metric-value" id="carsPassed">0</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Average Wait Time</div>
+                <div class="metric-value" id="avgWaitTime">0.0s</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Throughput (cars/min)</div>
+                <div class="metric-value" id="throughput">0</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Current Queue Length</div>
+                <div class="metric-value" id="queueLength">0</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Light Cycle Time</div>
+                <div class="metric-value" id="cycleTime">0.0s</div>
+            </div>
+            <div class="explanation" id="explanation">
+                <strong>How it works:</strong> Cars approach the traffic light. When the light is red, they stop. When green, they proceed. The metrics show real-time traffic flow statistics.
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/typescript@5.3.3/lib/typescript.js"></script>
+    <script type="text/typescript">
+        // Traffic Light Simulation - Metrics Variant
+        // Features: Real-time statistics, educational explanations
+
+        enum LightState {
+            RED = 'red',
+            YELLOW = 'yellow',
+            GREEN = 'green'
+        }
+
+        interface Car {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+            speed: number;
+            color: string;
+            waitStartTime: number | null;
+            hasPassed: boolean;
+        }
+
+        interface Metrics {
+            carsPassed: number;
+            totalWaitTime: number;
+            waitTimes: number[];
+            startTime: number;
+            lastCarPassTime: number;
+        }
+
+        class MetricsTrafficSimulation {
+            private canvas: HTMLCanvasElement;
+            private ctx: CanvasRenderingContext2D;
+            private lightState: LightState = LightState.RED;
+            private lightTimer: number = 0;
+            private lightDurations: { [key: string]: number } = {
+                red: 3000,
+                yellow: 1500,
+                green: 4000
+            };
+            private cars: Car[] = [];
+            private carSpawnTimer: number = 0;
+            private carSpawnInterval: number = 2000;
+            private isRunning: boolean = true;
+            private roadY: number = 200;
+            private lightX: number = 300;
+            private lastTime: number = 0;
+            private metrics: Metrics;
+            private explanations: { [key: string]: string } = {
+                red: "Red light: All cars must stop. This creates a queue. Watch how the queue length increases!",
+                yellow: "Yellow light: Transition period. Cars that are too close continue, others prepare to stop.",
+                green: "Green light: Cars can proceed! Throughput increases as cars pass through the intersection."
+            };
+
+            constructor(canvasId: string) {
+                this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
+                this.ctx = this.canvas.getContext('2d')!;
+                this.roadY = this.canvas.height / 2;
+                this.lightX = this.canvas.width / 2;
+                this.metrics = {
+                    carsPassed: 0,
+                    totalWaitTime: 0,
+                    waitTimes: [],
+                    startTime: Date.now(),
+                    lastCarPassTime: Date.now()
+                };
+                this.initCars();
+                this.setupControls();
+                this.animate(0);
+            }
+
+            private initCars(): void {
+                for (let i = 0; i < 2; i++) {
+                    this.spawnCar(-100 - i * 150);
+                }
+            }
+
+            private spawnCar(initialX: number = -50): void {
+                const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                this.cars.push({
+                    x: initialX,
+                    y: this.roadY - 15,
+                    width: 40,
+                    height: 30,
+                    speed: 2,
+                    color: color,
+                    waitStartTime: null,
+                    hasPassed: false
+                });
+            }
+
+            private updateLightState(deltaTime: number): void {
+                this.lightTimer += deltaTime;
+                const currentDuration = this.lightDurations[this.lightState];
+
+                if (this.lightTimer >= currentDuration) {
+                    this.lightTimer = 0;
+                    switch (this.lightState) {
+                        case LightState.RED:
+                            this.lightState = LightState.GREEN;
+                            break;
+                        case LightState.GREEN:
+                            this.lightState = LightState.YELLOW;
+                            break;
+                        case LightState.YELLOW:
+                            this.lightState = LightState.RED;
+                            break;
+                    }
+                    this.updateExplanation();
+                }
+            }
+
+            private updateCars(deltaTime: number): void {
+                if (!this.isRunning) return;
+
+                // Spawn new cars
+                this.carSpawnTimer += deltaTime;
+                if (this.carSpawnTimer >= this.carSpawnInterval) {
+                    this.carSpawnTimer = 0;
+                    this.spawnCar();
+                }
+
+                // Update car positions and track metrics
+                for (let i = this.cars.length - 1; i >= 0; i--) {
+                    const car = this.cars[i];
+                    const shouldStop = this.lightState === LightState.RED && 
+                                     car.x < this.lightX - 50 && 
+                                     car.x > this.lightX - 250;
+
+                    // Track wait time
+                    if (shouldStop && car.waitStartTime === null) {
+                        car.waitStartTime = Date.now();
+                    } else if (!shouldStop && car.waitStartTime !== null) {
+                        const waitTime = Date.now() - car.waitStartTime;
+                        this.metrics.waitTimes.push(waitTime);
+                        this.metrics.totalWaitTime += waitTime;
+                        car.waitStartTime = null;
+                    }
+
+                    if (!shouldStop && this.lightState !== LightState.RED) {
+                        car.x += car.speed * (deltaTime / 16);
+                    }
+
+                    // Track cars that passed
+                    if (car.x > this.lightX + 50 && !car.hasPassed) {
+                        car.hasPassed = true;
+                        this.metrics.carsPassed++;
+                        this.metrics.lastCarPassTime = Date.now();
+                    }
+
+                    // Remove cars that have left the screen
+                    if (car.x > this.canvas.width + 50) {
+                        this.cars.splice(i, 1);
+                    }
+                }
+            }
+
+            private calculateMetrics(): void {
+                // Update metric displays
+                const carsPassedEl = document.getElementById('carsPassed');
+                const avgWaitTimeEl = document.getElementById('avgWaitTime');
+                const throughputEl = document.getElementById('throughput');
+                const queueLengthEl = document.getElementById('queueLength');
+                const cycleTimeEl = document.getElementById('cycleTime');
+
+                if (carsPassedEl) {
+                    carsPassedEl.textContent = this.metrics.carsPassed.toString();
+                }
+
+                if (avgWaitTimeEl) {
+                    const avgWait = this.metrics.waitTimes.length > 0
+                        ? (this.metrics.totalWaitTime / this.metrics.waitTimes.length / 1000).toFixed(1)
+                        : '0.0';
+                    avgWaitTimeEl.textContent = `${avgWait}s`;
+                }
+
+                if (throughputEl) {
+                    const elapsedMinutes = (Date.now() - this.metrics.startTime) / 60000;
+                    const throughput = elapsedMinutes > 0
+                        ? Math.round(this.metrics.carsPassed / elapsedMinutes)
+                        : 0;
+                    throughputEl.textContent = throughput.toString();
+                }
+
+                if (queueLengthEl) {
+                    const queueLength = this.cars.filter(c => 
+                        c.x < this.lightX - 50 && c.x > this.lightX - 250
+                    ).length;
+                    queueLengthEl.textContent = queueLength.toString();
+                }
+
+                if (cycleTimeEl) {
+                    const totalCycleTime = Object.values(this.lightDurations).reduce((a, b) => a + b, 0);
+                    const cycleProgress = this.lightTimer / totalCycleTime;
+                    const currentCycleTime = Object.values(this.lightDurations).reduce((sum, dur, idx) => {
+                        if (idx < Object.keys(this.lightDurations).indexOf(this.lightState)) {
+                            return sum + dur;
+                        }
+                        return sum;
+                    }, 0) + this.lightTimer;
+                    cycleTimeEl.textContent = `${(currentCycleTime / 1000).toFixed(1)}s`;
+                }
+            }
+
+            private updateExplanation(): void {
+                const explanationEl = document.getElementById('explanation');
+                if (explanationEl) {
+                    explanationEl.innerHTML = `<strong>Current State:</strong> ${this.explanations[this.lightState]}`;
+                }
+            }
+
+            private drawRoad(): void {
+                // Road surface
+                this.ctx.fillStyle = '#4a4a4a';
+                this.ctx.fillRect(0, this.roadY - 30, this.canvas.width, 60);
+
+                // Stop line
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillRect(this.lightX - 52, this.roadY - 30, 4, 60);
+
+                // Road markings
+                this.ctx.strokeStyle = '#ffff00';
+                this.ctx.lineWidth = 2;
+                this.ctx.setLineDash([20, 20]);
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, this.roadY);
+                this.ctx.lineTo(this.canvas.width, this.roadY);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+            }
+
+            private drawTrafficLight(): void {
+                const lightY = this.roadY - 80;
+                const lightSize = 20;
+                const spacing = 30;
+
+                // Traffic light box
+                this.ctx.fillStyle = '#333';
+                this.ctx.fillRect(this.lightX - 15, lightY - 10, 30, 90);
+
+                // Red light
+                this.ctx.beginPath();
+                this.ctx.arc(this.lightX, lightY, lightSize, 0, Math.PI * 2);
+                this.ctx.fillStyle = this.lightState === LightState.RED ? '#ff0000' : '#440000';
+                this.ctx.fill();
+                this.ctx.strokeStyle = '#000';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+                if (this.lightState === LightState.RED) {
+                    this.ctx.shadowBlur = 15;
+                    this.ctx.shadowColor = '#ff0000';
+                    this.ctx.fill();
+                    this.ctx.shadowBlur = 0;
+                }
+
+                // Yellow light
+                this.ctx.beginPath();
+                this.ctx.arc(this.lightX, lightY + spacing, lightSize, 0, Math.PI * 2);
+                this.ctx.fillStyle = this.lightState === LightState.YELLOW ? '#ffff00' : '#444400';
+                this.ctx.fill();
+                this.ctx.stroke();
+                if (this.lightState === LightState.YELLOW) {
+                    this.ctx.shadowBlur = 15;
+                    this.ctx.shadowColor = '#ffff00';
+                    this.ctx.fill();
+                    this.ctx.shadowBlur = 0;
+                }
+
+                // Green light
+                this.ctx.beginPath();
+                this.ctx.arc(this.lightX, lightY + spacing * 2, lightSize, 0, Math.PI * 2);
+                this.ctx.fillStyle = this.lightState === LightState.GREEN ? '#00ff00' : '#004400';
+                this.ctx.fill();
+                this.ctx.stroke();
+                if (this.lightState === LightState.GREEN) {
+                    this.ctx.shadowBlur = 15;
+                    this.ctx.shadowColor = '#00ff00';
+                    this.ctx.fill();
+                    this.ctx.shadowBlur = 0;
+                }
+            }
+
+            private drawCars(): void {
+                for (const car of this.cars) {
+                    // Car shadow
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                    this.ctx.fillRect(car.x + 2, car.y + car.height, car.width, 4);
+
+                    // Car body
+                    this.ctx.fillStyle = car.color;
+                    this.ctx.fillRect(car.x, car.y, car.width, car.height);
+
+                    // Car windows
+                    this.ctx.fillStyle = '#87CEEB';
+                    this.ctx.fillRect(car.x + 5, car.y + 5, 12, 8);
+                    this.ctx.fillRect(car.x + 23, car.y + 5, 12, 8);
+
+                    // Car wheels
+                    this.ctx.fillStyle = '#222';
+                    this.ctx.fillRect(car.x + 5, car.y + car.height - 5, 10, 5);
+                    this.ctx.fillRect(car.x + 25, car.y + car.height - 5, 10, 5);
+
+                    // Waiting indicator
+                    if (car.waitStartTime !== null) {
+                        this.ctx.fillStyle = '#ff0000';
+                        this.ctx.beginPath();
+                        this.ctx.arc(car.x + car.width / 2, car.y - 5, 3, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+                }
+            }
+
+            private draw(): void {
+                // Clear canvas
+                this.ctx.fillStyle = '#87CEEB';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw grass
+                this.ctx.fillStyle = '#90EE90';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.roadY - 30);
+                this.ctx.fillRect(0, this.roadY + 30, this.canvas.width, this.canvas.height - (this.roadY + 30));
+
+                this.drawRoad();
+                this.drawTrafficLight();
+                this.drawCars();
+
+                // Draw state indicator
+                this.ctx.fillStyle = '#000';
+                this.ctx.font = 'bold 18px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(`Light: ${this.lightState.toUpperCase()}`, this.canvas.width / 2, 30);
+            }
+
+            private animate = (currentTime: number): void => {
+                const deltaTime = currentTime - this.lastTime || 16;
+                this.lastTime = currentTime;
+
+                if (this.isRunning) {
+                    this.updateLightState(deltaTime);
+                    this.updateCars(deltaTime);
+                    this.calculateMetrics();
+                }
+
+                this.draw();
+                requestAnimationFrame(this.animate);
+            };
+
+            private setupControls(): void {
+                const toggleBtn = document.getElementById('toggleBtn') as HTMLButtonElement;
+                const resetBtn = document.getElementById('resetBtn') as HTMLButtonElement;
+
+                toggleBtn.addEventListener('click', () => {
+                    this.isRunning = !this.isRunning;
+                    toggleBtn.textContent = this.isRunning ? 'Pause' : 'Resume';
+                });
+
+                resetBtn.addEventListener('click', () => {
+                    this.cars = [];
+                    this.lightState = LightState.RED;
+                    this.lightTimer = 0;
+                    this.carSpawnTimer = 0;
+                    this.metrics = {
+                        carsPassed: 0,
+                        totalWaitTime: 0,
+                        waitTimes: [],
+                        startTime: Date.now(),
+                        lastCarPassTime: Date.now()
+                    };
+                    this.initCars();
+                    this.updateExplanation();
+                });
+            }
+        }
+
+        // Compile and run TypeScript
+        window.addEventListener('DOMContentLoaded', () => {
+            const script = document.querySelector('script[type="text/typescript"]') as HTMLScriptElement;
+            const code = script.textContent || '';
+            const compiled = (window as any).ts.transpile(code, {
+                target: (window as any).ts.ScriptTarget.ES2020,
+                module: (window as any).ts.ModuleKind.None
+            });
+            eval(compiled);
+            new MetricsTrafficSimulation('canvas');
+        });
+    </script>
+</body>
+</html>
