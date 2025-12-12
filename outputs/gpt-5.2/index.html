@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Traffic Light Basics (v1)</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: rgba(255, 255, 255, 0.06);
+        --panel2: rgba(255, 255, 255, 0.08);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.7);
+        --grid: rgba(255, 255, 255, 0.08);
+        --road: #161b2f;
+        --lane: rgba(255, 255, 255, 0.2);
+        --shadow: rgba(0, 0, 0, 0.35);
+        --good: #46d369;
+        --warn: #ffd166;
+        --bad: #ff4d6d;
+        --accent: #66a6ff;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: radial-gradient(1200px 800px at 20% 0%, #111a3a 0%, var(--bg) 55%, #060815 100%);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
+          "Segoe UI Emoji";
+        overflow: hidden;
+      }
+      .wrap {
+        height: 100%;
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 14px;
+        padding: 14px;
+        box-sizing: border-box;
+      }
+      .panel {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.04));
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+        box-shadow: 0 14px 40px var(--shadow);
+        overflow: hidden;
+      }
+      .left {
+        display: grid;
+        grid-template-rows: auto auto 1fr auto;
+      }
+      header {
+        padding: 14px 14px 10px 14px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.18);
+      }
+      header .title {
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        font-size: 14px;
+      }
+      header .subtitle {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+      .controls {
+        padding: 12px 14px 4px 14px;
+        display: grid;
+        gap: 10px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 10px;
+      }
+      .row label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .row output {
+        font-variant-numeric: tabular-nums;
+        font-size: 12px;
+        color: var(--text);
+        opacity: 0.9;
+        min-width: 76px;
+        text-align: right;
+      }
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--accent);
+      }
+      .btns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        padding: 10px 14px 14px 14px;
+      }
+      button {
+        cursor: pointer;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 10px 10px;
+        font-size: 12px;
+        font-weight: 650;
+        letter-spacing: 0.1px;
+        transition: transform 0.05s ease, background 0.15s ease;
+        user-select: none;
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      button.primary {
+        background: rgba(102, 166, 255, 0.14);
+        border-color: rgba(102, 166, 255, 0.34);
+      }
+      button.danger {
+        background: rgba(255, 77, 109, 0.12);
+        border-color: rgba(255, 77, 109, 0.34);
+      }
+      .stats {
+        padding: 10px 14px 14px 14px;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.14);
+        display: grid;
+        gap: 8px;
+      }
+      .statline {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: baseline;
+        font-size: 12px;
+      }
+      .statline .k {
+        color: var(--muted);
+      }
+      .statline .v {
+        font-variant-numeric: tabular-nums;
+      }
+      .hint {
+        padding: 0 14px 14px 14px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+      .canvasPanel {
+        position: relative;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .badge {
+        position: absolute;
+        left: 12px;
+        top: 12px;
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        padding: 8px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        color: var(--text);
+        user-select: none;
+        backdrop-filter: blur(6px);
+      }
+      .badge b {
+        font-weight: 750;
+      }
+      .kbd {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        font-variant-numeric: tabular-nums;
+      }
+      @media (max-width: 980px) {
+        .wrap {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto 1fr;
+          overflow: auto;
+        }
+        body {
+          overflow: auto;
+        }
+        .canvasPanel {
+          min-height: 520px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <section class="panel left">
+        <header>
+          <div class="title">Traffic Light Basics (v1)</div>
+          <div class="subtitle">
+            One-lane, one-way road with a single traffic light. Cars follow a simple “keep a safe gap” rule, and the light
+            gates the flow.
+          </div>
+        </header>
+
+        <div class="controls" id="controls">
+          <div class="row">
+            <label for="spawn">Spawn rate (cars/min)</label>
+            <output id="spawnOut"></output>
+          </div>
+          <input id="spawn" type="range" min="6" max="80" step="1" />
+
+          <div class="row">
+            <label for="limit">Speed limit (m/s)</label>
+            <output id="limitOut"></output>
+          </div>
+          <input id="limit" type="range" min="6" max="22" step="0.5" />
+
+          <div class="row">
+            <label for="green">Green duration (s)</label>
+            <output id="greenOut"></output>
+          </div>
+          <input id="green" type="range" min="3" max="20" step="0.5" />
+
+          <div class="row">
+            <label for="red">Red duration (s)</label>
+            <output id="redOut"></output>
+          </div>
+          <input id="red" type="range" min="3" max="20" step="0.5" />
+
+          <div class="row">
+            <label for="reaction">Driver reaction (s)</label>
+            <output id="reactionOut"></output>
+          </div>
+          <input id="reaction" type="range" min="0.6" max="1.8" step="0.05" />
+        </div>
+
+        <div class="hint">
+          - Press <span class="kbd">Space</span> to pause<br />
+          - Press <span class="kbd">L</span> to toggle manual light (click the light to change)<br />
+          - Try increasing spawn rate until a queue forms, then adjust green/red to clear it.
+        </div>
+
+        <div class="btns">
+          <button id="reset" class="danger">Reset</button>
+          <button id="nudgeGreen" class="primary">+2s green</button>
+        </div>
+
+        <div class="stats">
+          <div class="statline"><div class="k">Light</div><div class="v" id="lightState">—</div></div>
+          <div class="statline"><div class="k">Queue length</div><div class="v" id="queueLen">—</div></div>
+          <div class="statline"><div class="k">Throughput (cars/min)</div><div class="v" id="flow">—</div></div>
+          <div class="statline"><div class="k">Avg speed (m/s)</div><div class="v" id="avgSpeed">—</div></div>
+          <div class="statline"><div class="k">Avg wait in queue (s)</div><div class="v" id="avgWait">—</div></div>
+        </div>
+      </section>
+
+      <section class="panel canvasPanel" aria-label="traffic simulation canvas">
+        <div class="badge">
+          <b>Controls:</b> Drag to pan • Wheel to zoom • <span class="kbd">Space</span> pause • <span class="kbd">L</span>
+          manual light
+        </div>
+        <canvas id="c"></canvas>
+      </section>
+    </div>
+
+    <script type="module">
+      // @ts-check
+      /**
+       * This file is standalone and runs as plain JavaScript.
+       * Types are provided via JSDoc so editors can treat it like TypeScript without a build step.
+       */
+
+      /** @typedef {{x:number, y:number}} Vec2 */
+      /** @typedef {{ id:number, x:number, v:number, a:number, length:number, color:string, bornT:number, queuedSince:number|null, totalQueueWait:number }} Car */
+
+      const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById("c"));
+      const ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext("2d", { alpha: false }));
+
+      // UI
+      const spawnEl = /** @type {HTMLInputElement} */ (document.getElementById("spawn"));
+      const limitEl = /** @type {HTMLInputElement} */ (document.getElementById("limit"));
+      const greenEl = /** @type {HTMLInputElement} */ (document.getElementById("green"));
+      const redEl = /** @type {HTMLInputElement} */ (document.getElementById("red"));
+      const reactionEl = /** @type {HTMLInputElement} */ (document.getElementById("reaction"));
+      const spawnOut = /** @type {HTMLOutputElement} */ (document.getElementById("spawnOut"));
+      const limitOut = /** @type {HTMLOutputElement} */ (document.getElementById("limitOut"));
+      const greenOut = /** @type {HTMLOutputElement} */ (document.getElementById("greenOut"));
+      const redOut = /** @type {HTMLOutputElement} */ (document.getElementById("redOut"));
+      const reactionOut = /** @type {HTMLOutputElement} */ (document.getElementById("reactionOut"));
+      const lightStateEl = document.getElementById("lightState");
+      const queueLenEl = document.getElementById("queueLen");
+      const flowEl = document.getElementById("flow");
+      const avgSpeedEl = document.getElementById("avgSpeed");
+      const avgWaitEl = document.getElementById("avgWait");
+
+      const resetBtn = /** @type {HTMLButtonElement} */ (document.getElementById("reset"));
+      const nudgeGreenBtn = /** @type {HTMLButtonElement} */ (document.getElementById("nudgeGreen"));
+
+      // Simulation constants (world units are meters)
+      const ROAD_LEN_M = 320;
+      const LIGHT_X_M = 210;
+      const STOPLINE_X_M = LIGHT_X_M - 6; // stop slightly before the light
+      const EXIT_X_M = ROAD_LEN_M + 20;
+
+      const DT_MAX = 1 / 20; // clamp to keep stable
+      const CAR_MIN_GAP_M = 2.2; // bumper-to-bumper safety gap
+      const CAR_LEN_M = 4.5;
+      const MAX_BRAKE = 7.0; // m/s^2 (comfortable)
+      const MAX_ACCEL = 2.2; // m/s^2
+      const JERK_SMOOTH = 0.35; // smaller = snappier
+
+      // Camera
+      /** @type {{center:Vec2, ppm:number}} */
+      const cam = { center: { x: ROAD_LEN_M * 0.5, y: 0 }, ppm: 3.2 }; // pixels per meter
+      let isPanning = false;
+      /** @type {Vec2} */
+      let panStart = { x: 0, y: 0 };
+      /** @type {Vec2} */
+      let camStart = { x: 0, y: 0 };
+
+      // Simulation state
+      /** @type {Car[]} */
+      let cars = [];
+      let nextCarId = 1;
+      let simT = 0;
+      let paused = false;
+
+      /** @type {"auto"|"manual"} */
+      let lightMode = "auto";
+
+      /** @type {{phase:"green"|"red", phaseT:number}} */
+      const light = { phase: "green", phaseT: 0 };
+
+      /** Flow measurement */
+      const passedTimes = /** @type {number[]} */ ([]);
+      const PASS_LINE_X = LIGHT_X_M + 2.0;
+
+      // Metrics
+      let avgWaitSec = 0;
+
+      // Config (bound to UI)
+      const cfg = {
+        spawnPerMin: 30,
+        speedLimit: 14,
+        greenSec: 10,
+        redSec: 8,
+        reactionSec: 1.05,
+      };
+
+      function clamp(x, a, b) {
+        return x < a ? a : x > b ? b : x;
+      }
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
+      }
+      function fmt(x, digits = 1) {
+        return x.toFixed(digits);
+      }
+      function rand01() {
+        // xorshift32
+        seed ^= seed << 13;
+        seed ^= seed >>> 17;
+        seed ^= seed << 5;
+        return (seed >>> 0) / 4294967296;
+      }
+
+      let seed = 0x12345678 ^ (Date.now() >>> 0);
+      function pickColor() {
+        const palette = ["#7dd3fc", "#a7f3d0", "#fda4af", "#fcd34d", "#c4b5fd"];
+        return palette[Math.floor(rand01() * palette.length)];
+      }
+
+      function updateUI() {
+        spawnOut.value = `${cfg.spawnPerMin.toFixed(0)}`;
+        limitOut.value = `${fmt(cfg.speedLimit, 1)}`;
+        greenOut.value = `${fmt(cfg.greenSec, 1)}`;
+        redOut.value = `${fmt(cfg.redSec, 1)}`;
+        reactionOut.value = `${fmt(cfg.reactionSec, 2)}`;
+      }
+
+      function bindUI() {
+        spawnEl.value = String(cfg.spawnPerMin);
+        limitEl.value = String(cfg.speedLimit);
+        greenEl.value = String(cfg.greenSec);
+        redEl.value = String(cfg.redSec);
+        reactionEl.value = String(cfg.reactionSec);
+        updateUI();
+
+        spawnEl.addEventListener("input", () => {
+          cfg.spawnPerMin = Number(spawnEl.value);
+          updateUI();
+        });
+        limitEl.addEventListener("input", () => {
+          cfg.speedLimit = Number(limitEl.value);
+          updateUI();
+        });
+        greenEl.addEventListener("input", () => {
+          cfg.greenSec = Number(greenEl.value);
+          updateUI();
+        });
+        redEl.addEventListener("input", () => {
+          cfg.redSec = Number(redEl.value);
+          updateUI();
+        });
+        reactionEl.addEventListener("input", () => {
+          cfg.reactionSec = Number(reactionEl.value);
+          updateUI();
+        });
+
+        resetBtn.addEventListener("click", () => reset());
+        nudgeGreenBtn.addEventListener("click", () => {
+          cfg.greenSec = clamp(cfg.greenSec + 2, 3, 20);
+          greenEl.value = String(cfg.greenSec);
+          updateUI();
+        });
+      }
+
+      function reset() {
+        cars = [];
+        nextCarId = 1;
+        simT = 0;
+        light.phase = "green";
+        light.phaseT = 0;
+        passedTimes.length = 0;
+        avgWaitSec = 0;
+      }
+
+      function resize() {
+        const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      /** @param {number} wx */
+      function worldToScreenX(wx) {
+        return (wx - cam.center.x) * cam.ppm + canvas.clientWidth * 0.5;
+      }
+      /** @param {number} wy */
+      function worldToScreenY(wy) {
+        return (wy - cam.center.y) * cam.ppm + canvas.clientHeight * 0.5;
+      }
+      /** @param {number} sx */
+      function screenToWorldX(sx) {
+        return (sx - canvas.clientWidth * 0.5) / cam.ppm + cam.center.x;
+      }
+      /** @param {number} sy */
+      function screenToWorldY(sy) {
+        return (sy - canvas.clientHeight * 0.5) / cam.ppm + cam.center.y;
+      }
+
+      function bindCanvasControls() {
+        canvas.addEventListener("pointerdown", (e) => {
+          canvas.setPointerCapture(e.pointerId);
+          isPanning = true;
+          panStart = { x: e.clientX, y: e.clientY };
+          camStart = { x: cam.center.x, y: cam.center.y };
+        });
+        canvas.addEventListener("pointermove", (e) => {
+          if (!isPanning) return;
+          const dx = e.clientX - panStart.x;
+          const dy = e.clientY - panStart.y;
+          cam.center.x = camStart.x - dx / cam.ppm;
+          cam.center.y = camStart.y - dy / cam.ppm;
+        });
+        canvas.addEventListener("pointerup", () => {
+          isPanning = false;
+        });
+        canvas.addEventListener(
+          "wheel",
+          (e) => {
+            e.preventDefault();
+            const zoom = Math.exp(-e.deltaY * 0.0012);
+            const before = { x: screenToWorldX(e.clientX), y: screenToWorldY(e.clientY) };
+            cam.ppm = clamp(cam.ppm * zoom, 1.4, 7.0);
+            const after = { x: screenToWorldX(e.clientX), y: screenToWorldY(e.clientY) };
+            cam.center.x += before.x - after.x;
+            cam.center.y += before.y - after.y;
+          },
+          { passive: false }
+        );
+
+        // Click light when in manual
+        canvas.addEventListener("click", (e) => {
+          if (lightMode !== "manual") return;
+          const wx = screenToWorldX(e.clientX);
+          const wy = screenToWorldY(e.clientY);
+          const dx = wx - LIGHT_X_M;
+          const dy = wy - 0;
+          if (dx * dx + dy * dy < 10 * 10) {
+            light.phase = light.phase === "green" ? "red" : "green";
+            light.phaseT = 0;
+          }
+        });
+      }
+
+      function bindKeys() {
+        window.addEventListener("keydown", (e) => {
+          if (e.code === "Space") {
+            e.preventDefault();
+            paused = !paused;
+          } else if (e.key.toLowerCase() === "l") {
+            lightMode = lightMode === "auto" ? "manual" : "auto";
+          } else if (e.key.toLowerCase() === "r") {
+            reset();
+          }
+        });
+      }
+
+      /** @param {number} dt */
+      function stepLight(dt) {
+        if (lightMode !== "auto") return;
+        light.phaseT += dt;
+        if (light.phase === "green" && light.phaseT >= cfg.greenSec) {
+          light.phase = "red";
+          light.phaseT = 0;
+        } else if (light.phase === "red" && light.phaseT >= cfg.redSec) {
+          light.phase = "green";
+          light.phaseT = 0;
+        }
+      }
+
+      /** @param {number} dt */
+      function spawnCars(dt) {
+        const perSec = cfg.spawnPerMin / 60;
+        // Poisson-ish: expected arrivals per frame = rate * dt
+        const expected = perSec * dt;
+        let k = 0;
+        // cheap approximation: one arrival with probability expected (clamped), plus rare second when expected > 1
+        if (rand01() < clamp(expected, 0, 1)) k++;
+        if (expected > 1 && rand01() < clamp(expected - 1, 0, 1)) k++;
+
+        for (let i = 0; i < k; i++) {
+          // Place at entrance, but don't overlap
+          const spawnX = -18;
+          const last = cars.length ? cars[0] : null; // cars are sorted front-to-back; index 0 is front (largest x)
+          const backmost = cars.length ? cars[cars.length - 1] : null;
+          const behind = backmost;
+          if (behind) {
+            const gap = behind.x - behind.length - spawnX;
+            if (gap < CAR_MIN_GAP_M + 1.5) continue;
+          }
+          cars.push({
+            id: nextCarId++,
+            x: spawnX,
+            v: cfg.speedLimit * (0.8 + 0.35 * rand01()),
+            a: 0,
+            length: CAR_LEN_M * (0.92 + 0.12 * rand01()),
+            color: pickColor(),
+            bornT: simT,
+            queuedSince: null,
+            totalQueueWait: 0,
+          });
+        }
+      }
+
+      function sortCars() {
+        // Front = highest x
+        cars.sort((a, b) => b.x - a.x);
+      }
+
+      /**
+       * Compute target acceleration using a simple “desired speed + safe stopping” rule.
+       * @param {Car} car
+       * @param {Car|null} leader
+       */
+      function desiredAccel(car, leader) {
+        // Desired free-flow speed
+        const v0 = cfg.speedLimit;
+        const v = car.v;
+
+        // Interaction constraints: leader car or red light stopline
+        let obstacleX = Infinity;
+        let obstacleV = v0;
+        let obstacleLen = 0;
+        let obstacleIsStop = false;
+
+        if (leader) {
+          obstacleX = leader.x;
+          obstacleV = leader.v;
+          obstacleLen = leader.length;
+        }
+
+        if (light.phase === "red") {
+          // Consider stopline as obstacle if ahead
+          if (STOPLINE_X_M < obstacleX) {
+            obstacleX = STOPLINE_X_M;
+            obstacleV = 0;
+            obstacleLen = 0;
+            obstacleIsStop = true;
+          }
+        }
+
+        // Gap to obstacle front point
+        const frontBumper = car.x;
+        const backBumper = car.x - car.length;
+        const gap = obstacleX - frontBumper - CAR_MIN_GAP_M; // from our front to obstacle point
+
+        // Base acceleration toward desired speed
+        let aFree = (v0 - v) * 0.9; // proportional controller
+        aFree = clamp(aFree, -MAX_BRAKE * 0.6, MAX_ACCEL);
+
+        // If no obstacle or large gap, return free-flow accel
+        if (!isFinite(obstacleX) || gap > 80) return aFree;
+
+        // Relative speed (positive means we're faster -> closing)
+        const dv = v - obstacleV;
+
+        // Reaction-time based safe distance: s = minGap + v * reaction
+        const sSafe = CAR_MIN_GAP_M + v * cfg.reactionSec + 0.15 * v * v / MAX_BRAKE;
+        const s = obstacleIsStop ? obstacleX - frontBumper : obstacleX - frontBumper - obstacleLen;
+        const sEff = s - CAR_MIN_GAP_M;
+
+        // If we're inside safe distance, brake harder
+        const deficit = sSafe - Math.max(0.001, sEff);
+        let aInt = 0;
+        if (deficit > 0) {
+          aInt = -clamp(1.2 * deficit, 0, MAX_BRAKE);
+        } else {
+          // If closing too fast, apply anticipatory braking
+          const closing = Math.max(0, dv);
+          const brakeNeed = closing > 0 ? (closing * closing) / (2 * Math.max(0.1, sEff)) : 0;
+          aInt = -clamp(brakeNeed, 0, MAX_BRAKE);
+          // allow mild accel when comfortably spaced
+          aInt = Math.max(aInt, -MAX_BRAKE * 0.4);
+        }
+
+        // Combine: take the more conservative (smaller) accel
+        return Math.min(aFree, aInt);
+      }
+
+      /** @param {number} dt */
+      function stepCars(dt) {
+        sortCars();
+        // Update accelerations
+        for (let i = 0; i < cars.length; i++) {
+          const car = cars[i];
+          const leader = i === 0 ? null : cars[i - 1];
+          const aTarget = desiredAccel(car, leader);
+          // Smooth acceleration (jerk-limited-ish)
+          car.a = lerp(car.a, aTarget, 1 - Math.exp(-dt / JERK_SMOOTH));
+        }
+        // Integrate
+        for (const car of cars) {
+          car.v = clamp(car.v + car.a * dt, 0, cfg.speedLimit * 1.15);
+          car.x += car.v * dt;
+        }
+
+        // Queue wait tracking (cars that are near stopline and moving slowly)
+        for (const car of cars) {
+          const distToStop = STOPLINE_X_M - car.x;
+          const near = distToStop > -3 && distToStop < 60;
+          const slow = car.v < 0.8;
+          if (near && slow && light.phase === "red") {
+            if (car.queuedSince == null) car.queuedSince = simT;
+          } else {
+            if (car.queuedSince != null) {
+              car.totalQueueWait += simT - car.queuedSince;
+              car.queuedSince = null;
+            }
+          }
+        }
+
+        // Record cars passing the light
+        for (const car of cars) {
+          // Detect pass line with simple threshold; cars move forward only
+          if (car.x >= PASS_LINE_X && car.x - car.v * dt < PASS_LINE_X) {
+            passedTimes.push(simT);
+          }
+        }
+
+        // Remove exited cars
+        cars = cars.filter((c) => c.x < EXIT_X_M);
+      }
+
+      function computeStats() {
+        // Queue length: cars behind stopline within a window and slow-ish when red or congestion
+        let q = 0;
+        for (const c of cars) {
+          if (c.x < STOPLINE_X_M + 0.5 && c.x > STOPLINE_X_M - 90 && c.v < 1.1) q++;
+        }
+        // Throughput last 30s
+        const windowSec = 30;
+        const cutoff = simT - windowSec;
+        while (passedTimes.length && passedTimes[0] < cutoff) passedTimes.shift();
+        const flowPerMin = (passedTimes.length / windowSec) * 60;
+
+        // Avg speed
+        const vAvg = cars.length ? cars.reduce((s, c) => s + c.v, 0) / cars.length : 0;
+
+        // Avg wait (over cars currently in system, includes accumulated queue waits)
+        const waits = cars.map((c) => c.totalQueueWait + (c.queuedSince != null ? simT - c.queuedSince : 0));
+        avgWaitSec = waits.length ? waits.reduce((a, b) => a + b, 0) / waits.length : 0;
+
+        if (lightStateEl) {
+          const mode = lightMode === "auto" ? "auto" : "manual";
+          lightStateEl.textContent = `${light.phase.toUpperCase()} (${mode})`;
+          lightStateEl.style.color = light.phase === "green" ? "#46d369" : "#ff4d6d";
+        }
+        if (queueLenEl) queueLenEl.textContent = `${q}`;
+        if (flowEl) flowEl.textContent = `${fmt(flowPerMin, 1)}`;
+        if (avgSpeedEl) avgSpeedEl.textContent = `${fmt(vAvg, 1)}`;
+        if (avgWaitEl) avgWaitEl.textContent = `${fmt(avgWaitSec, 1)}`;
+      }
+
+      function draw() {
+        const w = canvas.clientWidth;
+        const h = canvas.clientHeight;
+
+        // Background
+        ctx.fillStyle = "#070a17";
+        ctx.fillRect(0, 0, w, h);
+
+        // Grid (world)
+        const gridStep = 20; // meters
+        const leftW = screenToWorldX(0);
+        const rightW = screenToWorldX(w);
+        const topW = screenToWorldY(0);
+        const botW = screenToWorldY(h);
+        const gx0 = Math.floor(leftW / gridStep) * gridStep;
+        const gy0 = Math.floor(topW / gridStep) * gridStep;
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "rgba(255,255,255,0.06)";
+        ctx.beginPath();
+        for (let x = gx0; x < rightW; x += gridStep) {
+          const sx = worldToScreenX(x);
+          ctx.moveTo(sx, 0);
+          ctx.lineTo(sx, h);
+        }
+        for (let y = gy0; y < botW; y += gridStep) {
+          const sy = worldToScreenY(y);
+          ctx.moveTo(0, sy);
+          ctx.lineTo(w, sy);
+        }
+        ctx.stroke();
+
+        // Road
+        const roadY = 0;
+        const roadHalfW = 12; // meters (visual only)
+        const roadX0 = -30;
+        const roadX1 = ROAD_LEN_M + 10;
+        const sx0 = worldToScreenX(roadX0);
+        const sx1 = worldToScreenX(roadX1);
+        const sy0 = worldToScreenY(roadY - roadHalfW);
+        const sy1 = worldToScreenY(roadY + roadHalfW);
+        ctx.fillStyle = "#141a2f";
+        ctx.fillRect(sx0, sy0, sx1 - sx0, sy1 - sy0);
+
+        // Lane markers
+        ctx.strokeStyle = "rgba(255,255,255,0.16)";
+        ctx.setLineDash([10, 12]);
+        ctx.beginPath();
+        const laneY = worldToScreenY(roadY);
+        ctx.moveTo(sx0, laneY);
+        ctx.lineTo(sx1, laneY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Stopline
+        const stopX = worldToScreenX(STOPLINE_X_M);
+        ctx.strokeStyle = "rgba(255,255,255,0.55)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(stopX, worldToScreenY(roadY - roadHalfW + 2));
+        ctx.lineTo(stopX, worldToScreenY(roadY + roadHalfW - 2));
+        ctx.stroke();
+
+        // Light pole + head
+        const lx = worldToScreenX(LIGHT_X_M);
+        const ly = worldToScreenY(roadY - roadHalfW - 6);
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = "rgba(255,255,255,0.18)";
+        ctx.beginPath();
+        ctx.moveTo(lx, worldToScreenY(roadY - roadHalfW + 1));
+        ctx.lineTo(lx, ly);
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        ctx.strokeStyle = "rgba(255,255,255,0.18)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(lx - 16, ly - 26, 32, 52, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        const bulb = (y, color, on) => {
+          ctx.beginPath();
+          ctx.arc(lx, y, 8, 0, Math.PI * 2);
+          ctx.fillStyle = on ? color : "rgba(255,255,255,0.12)";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(0,0,0,0.4)";
+          ctx.stroke();
+          if (on) {
+            ctx.beginPath();
+            ctx.arc(lx - 2, y - 2, 12, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.12;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+          }
+        };
+        bulb(ly - 12, "#ff4d6d", light.phase === "red");
+        bulb(ly + 12, "#46d369", light.phase === "green");
+
+        // Light label
+        ctx.font = "12px ui-sans-serif, system-ui";
+        ctx.fillStyle = "rgba(255,255,255,0.75)";
+        ctx.fillText(lightMode === "manual" ? "manual (click)" : "auto", lx + 22, ly + 4);
+
+        // Cars
+        // Draw from back to front for nicer overlap
+        const ordered = [...cars].sort((a, b) => a.x - b.x);
+        for (const car of ordered) {
+          const carW = car.length;
+          const carH = 4.4;
+          const x0w = car.x - carW;
+          const y0w = roadY - carH * 0.5;
+          const x0s = worldToScreenX(x0w);
+          const y0s = worldToScreenY(y0w + carH); // invert
+          const ws = carW * cam.ppm;
+          const hs = carH * cam.ppm;
+
+          ctx.fillStyle = "rgba(0,0,0,0.35)";
+          ctx.beginPath();
+          ctx.roundRect(x0s + 2, y0s + 2, ws, -hs, 7);
+          ctx.fill();
+
+          ctx.fillStyle = car.color;
+          ctx.beginPath();
+          ctx.roundRect(x0s, y0s, ws, -hs, 7);
+          ctx.fill();
+
+          // windshield
+          ctx.fillStyle = "rgba(0,0,0,0.22)";
+          ctx.beginPath();
+          ctx.roundRect(x0s + ws * 0.55, y0s - hs * 0.1, ws * 0.36, -hs * 0.8, 6);
+          ctx.fill();
+
+          // Brake lights when decelerating / stopped at red
+          const braking = car.a < -0.8 || (light.phase === "red" && car.v < 0.4 && car.x < STOPLINE_X_M + 3);
+          if (braking) {
+            ctx.fillStyle = "rgba(255,77,109,0.9)";
+            const lw = Math.max(2, ws * 0.12);
+            ctx.fillRect(x0s + 2, y0s - hs * 0.25, lw, -hs * 0.18);
+            ctx.fillRect(x0s + 2, y0s - hs * 0.75, lw, -hs * 0.18);
+          }
+        }
+
+        // Mini legend
+        ctx.fillStyle = "rgba(255,255,255,0.88)";
+        ctx.font = "12px ui-sans-serif, system-ui";
+        ctx.fillText(`t = ${fmt(simT, 1)}s  cars = ${cars.length}`, 12, h - 14);
+
+        // “Queue heat” overlay near stopline
+        const qRegionX0 = STOPLINE_X_M - 90;
+        const qRegionX1 = STOPLINE_X_M + 10;
+        const qCount = cars.filter((c) => c.x < STOPLINE_X_M + 0.5 && c.x > qRegionX0 && c.v < 1.1).length;
+        if (qCount > 0) {
+          const alpha = clamp(qCount / 18, 0, 0.28);
+          ctx.fillStyle = `rgba(255,209,102,${alpha})`;
+          const rx0 = worldToScreenX(qRegionX0);
+          const rx1 = worldToScreenX(qRegionX1);
+          const ry0 = worldToScreenY(roadY - roadHalfW);
+          const ry1 = worldToScreenY(roadY + roadHalfW);
+          ctx.fillRect(rx0, ry0, rx1 - rx0, ry1 - ry0);
+        }
+      }
+
+      let lastNow = performance.now();
+      function frame(now) {
+        const dtRaw = (now - lastNow) / 1000;
+        lastNow = now;
+        const dt = clamp(dtRaw, 0, DT_MAX);
+
+        if (!paused) {
+          simT += dt;
+          stepLight(dt);
+          spawnCars(dt);
+          stepCars(dt);
+          computeStats();
+        }
+        draw();
+        requestAnimationFrame(frame);
+      }
+
+      // Small polyfill for roundRect on older canvases (still draws fine if missing)
+      if (!CanvasRenderingContext2D.prototype.roundRect) {
+        // @ts-ignore
+        CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+          const rr = typeof r === "number" ? { tl: r, tr: r, br: r, bl: r } : r;
+          const tl = rr.tl ?? 0,
+            tr = rr.tr ?? 0,
+            br = rr.br ?? 0,
+            bl = rr.bl ?? 0;
+          this.beginPath();
+          this.moveTo(x + tl, y);
+          this.lineTo(x + w - tr, y);
+          this.quadraticCurveTo(x + w, y, x + w, y + tr);
+          this.lineTo(x + w, y + h - br);
+          this.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+          this.lineTo(x + bl, y + h);
+          this.quadraticCurveTo(x, y + h, x, y + h - bl);
+          this.lineTo(x, y + tl);
+          this.quadraticCurveTo(x, y, x + tl, y);
+          this.closePath();
+          return this;
+        };
+      }
+
+      bindUI();
+      bindCanvasControls();
+      bindKeys();
+      resize();
+      window.addEventListener("resize", resize);
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>
