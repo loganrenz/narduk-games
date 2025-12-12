@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traffic Light Simulation</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      color: #fff;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      background: linear-gradient(90deg, #00d4ff, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    canvas {
+      display: block;
+      border-radius: 8px;
+      background: #2d3748;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+      color: white;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .stats {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      text-align: center;
+    }
+
+    .stat {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #00d4ff;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚦 Traffic Light Simulation</h1>
+  <div class="container">
+    <canvas id="canvas" width="800" height="400"></canvas>
+    <div class="controls">
+      <button id="toggleBtn">Pause</button>
+      <button id="addCarBtn">Add Car</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Cars Passed</div>
+        <div class="stat-value" id="passedCount">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Waiting</div>
+        <div class="stat-value" id="waitingCount">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Light State</div>
+        <div class="stat-value" id="lightState">GREEN</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // Traffic Light Simulation - Claude Opus 4
+    // A standalone canvas-based traffic simulation
+    // ============================================================
+
+    (function() {
+      'use strict';
+
+      // --- Configuration ---
+      /** @type {Object} */
+      const CONFIG = {
+        ROAD_Y: 200,
+        ROAD_HEIGHT: 80,
+        LANE_COUNT: 2,
+        CAR_WIDTH: 60,
+        CAR_HEIGHT: 30,
+        CAR_SPEED_MIN: 2,
+        CAR_SPEED_MAX: 4,
+        SPAWN_INTERVAL: 1500,
+        LIGHT_X: 500,
+        LIGHT_GREEN_DURATION: 4000,
+        LIGHT_YELLOW_DURATION: 1000,
+        LIGHT_RED_DURATION: 3000,
+        STOP_LINE_X: 480,
+        SAFE_DISTANCE: 80,
+      };
+
+      // --- Car Colors Palette ---
+      const CAR_COLORS = [
+        '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4',
+        '#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#14b8a6'
+      ];
+
+      // --- State ---
+      /** @type {'green' | 'yellow' | 'red'} */
+      let lightState = 'green';
+      let lightTimer = 0;
+      let lastSpawnTime = 0;
+      let carsPassed = 0;
+      let isPaused = false;
+      let lastFrameTime = 0;
+
+      /** @typedef {{x: number, y: number, speed: number, color: string, lane: number, waiting: boolean}} Car */
+      /** @type {Car[]} */
+      let cars = [];
+
+      // --- Canvas Setup ---
+      const canvas = /** @type {HTMLCanvasElement} */ (document.getElementById('canvas'));
+      const ctx = /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d'));
+
+      // --- UI Elements ---
+      const toggleBtn = /** @type {HTMLButtonElement} */ (document.getElementById('toggleBtn'));
+      const addCarBtn = /** @type {HTMLButtonElement} */ (document.getElementById('addCarBtn'));
+      const resetBtn = /** @type {HTMLButtonElement} */ (document.getElementById('resetBtn'));
+      const passedCountEl = /** @type {HTMLElement} */ (document.getElementById('passedCount'));
+      const waitingCountEl = /** @type {HTMLElement} */ (document.getElementById('waitingCount'));
+      const lightStateEl = /** @type {HTMLElement} */ (document.getElementById('lightState'));
+
+      // --- Utility Functions ---
+      /**
+       * Get a random number between min and max
+       * @param {number} min 
+       * @param {number} max 
+       * @returns {number}
+       */
+      function random(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      /**
+       * Get a random item from an array
+       * @template T
+       * @param {T[]} arr 
+       * @returns {T}
+       */
+      function randomFrom(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+
+      // --- Car Management ---
+      /**
+       * Create a new car
+       * @returns {Car}
+       */
+      function createCar() {
+        const lane = Math.floor(Math.random() * CONFIG.LANE_COUNT);
+        const laneHeight = CONFIG.ROAD_HEIGHT / CONFIG.LANE_COUNT;
+        const y = CONFIG.ROAD_Y + lane * laneHeight + (laneHeight - CONFIG.CAR_HEIGHT) / 2;
+        
+        return {
+          x: -CONFIG.CAR_WIDTH,
+          y: y,
+          speed: random(CONFIG.CAR_SPEED_MIN, CONFIG.CAR_SPEED_MAX),
+          color: randomFrom(CAR_COLORS),
+          lane: lane,
+          waiting: false
+        };
+      }
+
+      /**
+       * Check if car should stop
+       * @param {Car} car 
+       * @param {number} index 
+       * @returns {boolean}
+       */
+      function shouldCarStop(car, index) {
+        // Check traffic light
+        const frontOfCar = car.x + CONFIG.CAR_WIDTH;
+        const nearStopLine = frontOfCar >= CONFIG.STOP_LINE_X - 10 && frontOfCar <= CONFIG.STOP_LINE_X + 20;
+        
+        if (nearStopLine && (lightState === 'red' || lightState === 'yellow')) {
+          return true;
+        }
+
+        // Check car ahead in same lane
+        for (let i = 0; i < cars.length; i++) {
+          if (i === index) continue;
+          const other = cars[i];
+          if (other.lane !== car.lane) continue;
+          if (other.x > car.x && other.x - (car.x + CONFIG.CAR_WIDTH) < CONFIG.SAFE_DISTANCE) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      /**
+       * Update all cars
+       * @param {number} deltaTime 
+       */
+      function updateCars(deltaTime) {
+        for (let i = cars.length - 1; i >= 0; i--) {
+          const car = cars[i];
+          
+          car.waiting = shouldCarStop(car, i);
+          
+          if (!car.waiting) {
+            car.x += car.speed * (deltaTime / 16);
+          }
+
+          // Remove cars that have passed
+          if (car.x > canvas.width) {
+            cars.splice(i, 1);
+            carsPassed++;
+          }
+        }
+      }
+
+      // --- Traffic Light ---
+      /**
+       * Update traffic light state
+       * @param {number} deltaTime 
+       */
+      function updateLight(deltaTime) {
+        lightTimer += deltaTime;
+
+        const durations = {
+          green: CONFIG.LIGHT_GREEN_DURATION,
+          yellow: CONFIG.LIGHT_YELLOW_DURATION,
+          red: CONFIG.LIGHT_RED_DURATION
+        };
+
+        if (lightTimer >= durations[lightState]) {
+          lightTimer = 0;
+          if (lightState === 'green') lightState = 'yellow';
+          else if (lightState === 'yellow') lightState = 'red';
+          else lightState = 'green';
+        }
+      }
+
+      /**
+       * Spawn new cars periodically
+       * @param {number} currentTime 
+       */
+      function spawnCars(currentTime) {
+        if (currentTime - lastSpawnTime > CONFIG.SPAWN_INTERVAL) {
+          // Don't spawn if there's a car too close to spawn point
+          const canSpawn = !cars.some(c => c.x < CONFIG.CAR_WIDTH * 2);
+          if (canSpawn) {
+            cars.push(createCar());
+          }
+          lastSpawnTime = currentTime;
+        }
+      }
+
+      // --- Rendering ---
+      function drawBackground() {
+        // Sky gradient
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, CONFIG.ROAD_Y);
+        skyGradient.addColorStop(0, '#87CEEB');
+        skyGradient.addColorStop(1, '#E0F6FF');
+        ctx.fillStyle = skyGradient;
+        ctx.fillRect(0, 0, canvas.width, CONFIG.ROAD_Y);
+
+        // Grass below road
+        ctx.fillStyle = '#4ade80';
+        ctx.fillRect(0, CONFIG.ROAD_Y + CONFIG.ROAD_HEIGHT, canvas.width, canvas.height - CONFIG.ROAD_Y - CONFIG.ROAD_HEIGHT);
+
+        // Sun
+        ctx.beginPath();
+        ctx.arc(700, 60, 40, 0, Math.PI * 2);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fill();
+
+        // Clouds
+        drawCloud(100, 50);
+        drawCloud(300, 80);
+        drawCloud(550, 40);
+      }
+
+      /**
+       * Draw a cloud at position
+       * @param {number} x 
+       * @param {number} y 
+       */
+      function drawCloud(x, y) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.beginPath();
+        ctx.arc(x, y, 20, 0, Math.PI * 2);
+        ctx.arc(x + 25, y - 10, 25, 0, Math.PI * 2);
+        ctx.arc(x + 50, y, 20, 0, Math.PI * 2);
+        ctx.arc(x + 25, y + 5, 18, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function drawRoad() {
+        // Main road
+        ctx.fillStyle = '#374151';
+        ctx.fillRect(0, CONFIG.ROAD_Y, canvas.width, CONFIG.ROAD_HEIGHT);
+
+        // Road edges
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(0, CONFIG.ROAD_Y, canvas.width, 4);
+        ctx.fillRect(0, CONFIG.ROAD_Y + CONFIG.ROAD_HEIGHT - 4, canvas.width, 4);
+
+        // Lane divider (dashed)
+        ctx.setLineDash([20, 15]);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, CONFIG.ROAD_Y + CONFIG.ROAD_HEIGHT / 2);
+        ctx.lineTo(canvas.width, CONFIG.ROAD_Y + CONFIG.ROAD_HEIGHT / 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Stop line
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(CONFIG.STOP_LINE_X, CONFIG.ROAD_Y, 6, CONFIG.ROAD_HEIGHT);
+      }
+
+      function drawTrafficLight() {
+        const x = CONFIG.LIGHT_X;
+        const y = CONFIG.ROAD_Y - 100;
+
+        // Pole
+        ctx.fillStyle = '#374151';
+        ctx.fillRect(x + 12, y + 80, 8, 100);
+
+        // Light housing
+        ctx.fillStyle = '#1f2937';
+        ctx.fillRect(x, y, 32, 80);
+        ctx.strokeStyle = '#4b5563';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, 32, 80);
+
+        // Lights
+        const lights = [
+          { color: '#ef4444', active: lightState === 'red', cy: y + 15 },
+          { color: '#eab308', active: lightState === 'yellow', cy: y + 40 },
+          { color: '#22c55e', active: lightState === 'green', cy: y + 65 }
+        ];
+
+        lights.forEach(light => {
+          ctx.beginPath();
+          ctx.arc(x + 16, light.cy, 10, 0, Math.PI * 2);
+          
+          if (light.active) {
+            ctx.fillStyle = light.color;
+            ctx.shadowColor = light.color;
+            ctx.shadowBlur = 15;
+          } else {
+            ctx.fillStyle = '#1f2937';
+            ctx.shadowBlur = 0;
+          }
+          
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        });
+      }
+
+      /**
+       * Draw a car
+       * @param {Car} car 
+       */
+      function drawCar(car) {
+        const x = car.x;
+        const y = car.y;
+
+        // Car shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(x + 4, y + CONFIG.CAR_HEIGHT - 2, CONFIG.CAR_WIDTH - 4, 6);
+
+        // Car body
+        ctx.fillStyle = car.color;
+        ctx.beginPath();
+        ctx.roundRect(x, y + 8, CONFIG.CAR_WIDTH, CONFIG.CAR_HEIGHT - 8, 4);
+        ctx.fill();
+
+        // Car top/cabin
+        ctx.fillStyle = car.color;
+        ctx.beginPath();
+        ctx.roundRect(x + 12, y, CONFIG.CAR_WIDTH - 28, 14, [4, 4, 0, 0]);
+        ctx.fill();
+
+        // Windows
+        ctx.fillStyle = '#60a5fa';
+        ctx.fillRect(x + 14, y + 2, 10, 10);
+        ctx.fillRect(x + 28, y + 2, 16, 10);
+
+        // Wheels
+        ctx.fillStyle = '#1f2937';
+        ctx.beginPath();
+        ctx.arc(x + 14, y + CONFIG.CAR_HEIGHT, 6, 0, Math.PI * 2);
+        ctx.arc(x + CONFIG.CAR_WIDTH - 14, y + CONFIG.CAR_HEIGHT, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Wheel rims
+        ctx.fillStyle = '#9ca3af';
+        ctx.beginPath();
+        ctx.arc(x + 14, y + CONFIG.CAR_HEIGHT, 3, 0, Math.PI * 2);
+        ctx.arc(x + CONFIG.CAR_WIDTH - 14, y + CONFIG.CAR_HEIGHT, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Headlight
+        ctx.fillStyle = '#fef3c7';
+        ctx.fillRect(x + CONFIG.CAR_WIDTH - 4, y + 14, 4, 6);
+
+        // Brake light (when waiting)
+        if (car.waiting) {
+          ctx.fillStyle = '#ef4444';
+          ctx.shadowColor = '#ef4444';
+          ctx.shadowBlur = 8;
+          ctx.fillRect(x, y + 14, 3, 6);
+          ctx.shadowBlur = 0;
+        }
+      }
+
+      function drawAllCars() {
+        // Sort by y position for proper overlapping
+        const sortedCars = [...cars].sort((a, b) => a.y - b.y);
+        sortedCars.forEach(car => drawCar(car));
+      }
+
+      function updateUI() {
+        passedCountEl.textContent = carsPassed.toString();
+        waitingCountEl.textContent = cars.filter(c => c.waiting).length.toString();
+        lightStateEl.textContent = lightState.toUpperCase();
+        lightStateEl.style.color = lightState === 'green' ? '#22c55e' : 
+                                   lightState === 'yellow' ? '#eab308' : '#ef4444';
+      }
+
+      // --- Main Loop ---
+      /**
+       * Main animation loop
+       * @param {number} currentTime 
+       */
+      function gameLoop(currentTime) {
+        if (!isPaused) {
+          const deltaTime = lastFrameTime ? currentTime - lastFrameTime : 16;
+          lastFrameTime = currentTime;
+
+          // Update
+          updateLight(deltaTime);
+          updateCars(deltaTime);
+          spawnCars(currentTime);
+
+          // Render
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          drawBackground();
+          drawRoad();
+          drawTrafficLight();
+          drawAllCars();
+
+          // UI
+          updateUI();
+        }
+
+        requestAnimationFrame(gameLoop);
+      }
+
+      // --- Event Handlers ---
+      toggleBtn.addEventListener('click', () => {
+        isPaused = !isPaused;
+        toggleBtn.textContent = isPaused ? 'Resume' : 'Pause';
+        if (!isPaused) lastFrameTime = 0;
+      });
+
+      addCarBtn.addEventListener('click', () => {
+        const canSpawn = !cars.some(c => c.x < CONFIG.CAR_WIDTH * 2);
+        if (canSpawn) {
+          cars.push(createCar());
+        }
+      });
+
+      resetBtn.addEventListener('click', () => {
+        cars = [];
+        carsPassed = 0;
+        lightState = 'green';
+        lightTimer = 0;
+        lastSpawnTime = 0;
+        updateUI();
+      });
+
+      // --- Initialize ---
+      // Add initial cars
+      cars.push(createCar());
+      setTimeout(() => cars.push(createCar()), 500);
+
+      // Start the simulation
+      requestAnimationFrame(gameLoop);
+
+    })();
+  </script>
+</body>
+</html>
