@@ -1,66 +1,53 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 
-const fallbackBenchmarks = ['gpt-o3', 'claude-3-5']
-
 const isLoading = ref(false)
 const loadError = ref('')
 const benchmarks = ref([])
-const selected = ref('')
+const selected = ref([])
 
-const iframeSrc = computed(() => {
-  if (!selected.value) return ''
-  const folder = encodeURIComponent(selected.value)
-  return `/outputs/${folder}/index.html`
-})
-
-function parseDirectoryListingHtml(html) {
-  const doc = new DOMParser().parseFromString(html, 'text/html')
-  const links = Array.from(doc.querySelectorAll('a[href]'))
-  const dirs = links
-    .map((a) => a.getAttribute('href') || '')
-    .filter((href) => href && href !== '../')
-    .map((href) => href.replace(/^\.\//, ''))
-    .filter((href) => href.endsWith('/'))
-    .map((href) => href.replace(/\/$/, ''))
-    .filter((name) => name && !name.includes('/'))
-
-  return Array.from(new Set(dirs)).sort()
+function isSelected(name) {
+  return selected.value.includes(name)
 }
+
+function toggleSelected(name) {
+  if (isSelected(name)) {
+    selected.value = selected.value.filter((n) => n !== name)
+  } else {
+    selected.value = [...selected.value, name]
+  }
+}
+
+function removeSelected(name) {
+  selected.value = selected.value.filter((n) => n !== name)
+}
+
+const iframeItems = computed(() => {
+  return selected.value.map((name) => {
+    const folder = encodeURIComponent(name)
+    const src = new URL(`outputs/${folder}/index.html`, import.meta.env.BASE_URL).toString()
+    return { name, src }
+  })
+})
 
 async function loadBenchmarks() {
   isLoading.value = true
   loadError.value = ''
 
   try {
-    const res = await fetch('/outputs/', { headers: { Accept: 'text/html,application/json' } })
-    if (!res.ok) throw new Error(`Failed to fetch /outputs/ (HTTP ${res.status})`)
+    const modelsUrl = new URL('models.json', import.meta.env.BASE_URL).toString()
+    const res = await fetch(modelsUrl, { headers: { Accept: 'application/json' }, cache: 'no-store' })
+    if (!res.ok) throw new Error(`Failed to fetch models.json (HTTP ${res.status})`)
 
-    const contentType = (res.headers.get('content-type') || '').toLowerCase()
-
-    if (contentType.includes('application/json')) {
-      const data = await res.json()
-      const list = Array.isArray(data) ? data : data?.folders || data?.dirs || data?.results
-      if (Array.isArray(list) && list.length) {
-        benchmarks.value = list.map(String).filter(Boolean)
-        return
-      }
-      throw new Error('No folders found in /outputs/ JSON response')
-    }
-
-    const html = await res.text()
-    const dirs = parseDirectoryListingHtml(html)
-    if (dirs.length) {
-      benchmarks.value = dirs
-      return
-    }
-
-    throw new Error('No subfolders found in /outputs/ listing')
+    const data = await res.json()
+    const list = Array.isArray(data) ? data : []
+    benchmarks.value = list.map((m) => String(m?.name || '')).filter(Boolean)
   } catch (e) {
     loadError.value = e?.message || String(e)
-    benchmarks.value = [...fallbackBenchmarks]
+    benchmarks.value = []
   } finally {
-    if (!selected.value && benchmarks.value.length) selected.value = benchmarks.value[0]
+    // Default to first model if nothing selected
+    if (!selected.value.length && benchmarks.value.length) selected.value = [benchmarks.value[0]]
     isLoading.value = false
   }
 }
@@ -75,7 +62,7 @@ onMounted(() => {
     <aside class="sidebar">
       <div class="sidebar__header">
         <div class="title">Traffic Bench</div>
-        <div class="subtitle">Select a run in <code>/outputs</code></div>
+        <div class="subtitle">Select one or more outputs to compare</div>
       </div>
 
       <div class="sidebar__controls">
@@ -83,8 +70,9 @@ onMounted(() => {
           {{ isLoading ? 'Loading…' : 'Refresh' }}
         </button>
         <div v-if="loadError" class="hint">
-          Couldn’t list <code>/outputs/</code>; using fallback.
+          Couldn’t load <code>models.json</code>.
         </div>
+        <div v-else class="hint">{{ selected.length }} selected</div>
       </div>
 
       <nav class="list" aria-label="Benchmark folders">
@@ -93,27 +81,37 @@ onMounted(() => {
           :key="name"
           type="button"
           class="list__item"
-          :class="{ 'list__item--active': name === selected }"
-          @click="selected = name"
+          :class="{ 'list__item--active': isSelected(name) }"
+          @click="toggleSelected(name)"
         >
-          <span class="dot" aria-hidden="true" />
+          <input
+            class="checkbox"
+            type="checkbox"
+            :checked="isSelected(name)"
+            @click.stop
+            @change="toggleSelected(name)"
+            :aria-label="`Toggle ${name}`"
+          />
           <span class="label">{{ name }}</span>
         </button>
       </nav>
     </aside>
 
     <main class="main">
-      <div v-if="!iframeSrc" class="empty">
-        Choose a folder from the left to load <code>/outputs/&lt;folder&gt;/index.html</code>.
+      <div v-if="!iframeItems.length" class="empty">
+        Select one or more models to load <code>outputs/&lt;folder&gt;/index.html</code>.
       </div>
-      <iframe
-        v-else
-        class="viewer"
-        :key="iframeSrc"
-        :src="iframeSrc"
-        title="Benchmark output"
-        loading="lazy"
-      />
+      <div v-else class="grid" :style="{ '--cols': Math.min(iframeItems.length, 3) }">
+        <section v-for="item in iframeItems" :key="item.name" class="panel">
+          <header class="panel__header">
+            <div class="panel__title" :title="item.name">{{ item.name }}</div>
+            <button class="iconbtn" type="button" @click="removeSelected(item.name)" :aria-label="`Remove ${item.name}`">
+              ✕
+            </button>
+          </header>
+          <iframe class="viewer" :src="item.src" :title="`Benchmark output: ${item.name}`" loading="lazy" />
+        </section>
+      </div>
     </main>
   </div>
 </template>
@@ -188,7 +186,7 @@ onMounted(() => {
 .list__item {
   width: 100%;
   display: grid;
-  grid-template-columns: 10px 1fr;
+  grid-template-columns: 18px 1fr;
   gap: 10px;
   align-items: center;
   text-align: left;
@@ -209,15 +207,11 @@ onMounted(() => {
   border-color: rgba(99, 102, 241, 0.35);
 }
 
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.list__item--active .dot {
-  background: rgba(99, 102, 241, 1);
+.checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: rgba(99, 102, 241, 1);
+  cursor: pointer;
 }
 
 .label {
@@ -232,6 +226,7 @@ onMounted(() => {
   min-width: 0;
   height: 100vh;
   background: #0b0b10;
+  overflow: hidden;
 }
 
 .empty {
@@ -240,6 +235,55 @@ onMounted(() => {
   place-items: center;
   padding: 24px;
   color: rgba(234, 234, 242, 0.72);
+}
+
+.grid {
+  height: 100%;
+  width: 100%;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: 10px;
+}
+
+.panel {
+  min-width: 0;
+  min-height: 0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 40px 1fr;
+}
+
+.panel__header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.panel__title {
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iconbtn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .viewer {
@@ -258,6 +302,9 @@ onMounted(() => {
   .sidebar {
     border-right: 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
