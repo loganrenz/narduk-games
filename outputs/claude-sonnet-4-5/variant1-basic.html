@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Simulation - Basic</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            max-width: 900px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        canvas {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            display: block;
+            background: #2d3436;
+        }
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #667eea;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .stats {
+            margin-top: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        .stat {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚦 Traffic Flow Simulation</h1>
+        <p class="subtitle">Basic variant - Single lane traffic with intelligent stopping</p>
+        <canvas id="canvas" width="800" height="500"></canvas>
+        <div class="controls">
+            <button id="addCar">Add Car</button>
+            <button id="reset">Reset</button>
+            <button id="toggleLight">Toggle Light</button>
+        </div>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">Cars</div>
+                <div class="stat-value" id="carCount">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Avg Speed</div>
+                <div class="stat-value" id="avgSpeed">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Light State</div>
+                <div class="stat-value" id="lightState">GREEN</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/typescript">
+        // TypeScript Traffic Simulation - Basic Variant
+        
+        interface Car {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+            speed: number;
+            maxSpeed: number;
+            color: string;
+            acceleration: number;
+        }
+
+        class TrafficSimulation {
+            private canvas: HTMLCanvasElement;
+            private ctx: CanvasRenderingContext2D;
+            private cars: Car[] = [];
+            private lightX: number = 650;
+            private lightY: number = 100;
+            private lightState: 'red' | 'yellow' | 'green' = 'green';
+            private lightTimer: number = 0;
+            private lightDuration: number = 180; // frames
+            private animationId: number = 0;
+            
+            constructor(canvasId: string) {
+                this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
+                this.ctx = this.canvas.getContext('2d')!;
+                this.setupEventListeners();
+                this.addCar();
+                this.animate();
+            }
+
+            private setupEventListeners(): void {
+                document.getElementById('addCar')?.addEventListener('click', () => this.addCar());
+                document.getElementById('reset')?.addEventListener('click', () => this.reset());
+                document.getElementById('toggleLight')?.addEventListener('click', () => this.toggleLight());
+            }
+
+            private addCar(): void {
+                const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
+                const car: Car = {
+                    x: -60,
+                    y: 220,
+                    width: 50,
+                    height: 30,
+                    speed: 0,
+                    maxSpeed: 3 + Math.random() * 2,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    acceleration: 0.05
+                };
+                this.cars.push(car);
+            }
+
+            private toggleLight(): void {
+                const states: ('red' | 'yellow' | 'green')[] = ['red', 'yellow', 'green'];
+                const currentIndex = states.indexOf(this.lightState);
+                this.lightState = states[(currentIndex + 1) % states.length];
+                this.lightTimer = 0;
+            }
+
+            private reset(): void {
+                this.cars = [];
+                this.lightState = 'green';
+                this.lightTimer = 0;
+            }
+
+            private updateTrafficLight(): void {
+                this.lightTimer++;
+                if (this.lightTimer >= this.lightDuration) {
+                    this.lightTimer = 0;
+                    if (this.lightState === 'green') {
+                        this.lightState = 'yellow';
+                        this.lightDuration = 60; // Yellow is shorter
+                    } else if (this.lightState === 'yellow') {
+                        this.lightState = 'red';
+                        this.lightDuration = 180;
+                    } else {
+                        this.lightState = 'green';
+                        this.lightDuration = 180;
+                    }
+                }
+            }
+
+            private updateCars(): void {
+                for (let i = 0; i < this.cars.length; i++) {
+                    const car = this.cars[i];
+                    const distanceToLight = this.lightX - (car.x + car.width);
+                    const stoppingDistance = 50;
+                    
+                    // Check for car ahead
+                    let carAhead: Car | null = null;
+                    let minDistance = Infinity;
+                    for (let j = 0; j < this.cars.length; j++) {
+                        if (i !== j) {
+                            const other = this.cars[j];
+                            const distance = other.x - (car.x + car.width);
+                            if (distance > 0 && distance < minDistance) {
+                                minDistance = distance;
+                                carAhead = other;
+                            }
+                        }
+                    }
+
+                    // Decide whether to accelerate, maintain, or brake
+                    const shouldStopForLight = (this.lightState === 'red' || this.lightState === 'yellow') 
+                        && distanceToLight > 0 && distanceToLight < stoppingDistance;
+                    
+                    const shouldStopForCar = carAhead && minDistance < 70;
+
+                    if (shouldStopForLight || shouldStopForCar) {
+                        // Brake
+                        car.speed = Math.max(0, car.speed - car.acceleration * 2);
+                    } else if (car.speed < car.maxSpeed) {
+                        // Accelerate
+                        car.speed = Math.min(car.maxSpeed, car.speed + car.acceleration);
+                    }
+
+                    // Update position
+                    car.x += car.speed;
+
+                    // Remove cars that are off screen
+                    if (car.x > this.canvas.width + 100) {
+                        this.cars.splice(i, 1);
+                        i--;
+                    }
+                }
+            }
+
+            private drawRoad(): void {
+                // Road
+                this.ctx.fillStyle = '#34495e';
+                this.ctx.fillRect(0, 200, this.canvas.width, 80);
+
+                // Lane markings
+                this.ctx.strokeStyle = '#f1c40f';
+                this.ctx.lineWidth = 3;
+                this.ctx.setLineDash([20, 15]);
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, 240);
+                this.ctx.lineTo(this.canvas.width, 240);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+
+                // Sidewalks
+                this.ctx.fillStyle = '#95a5a6';
+                this.ctx.fillRect(0, 180, this.canvas.width, 20);
+                this.ctx.fillRect(0, 280, this.canvas.width, 20);
+            }
+
+            private drawTrafficLight(): void {
+                // Pole
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.fillRect(this.lightX - 5, this.lightY, 10, 100);
+
+                // Light box
+                this.ctx.fillStyle = '#34495e';
+                this.ctx.fillRect(this.lightX - 25, this.lightY - 80, 50, 80);
+                this.ctx.strokeStyle = '#1a1a1a';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(this.lightX - 25, this.lightY - 80, 50, 80);
+
+                // Lights
+                const lights = [
+                    { color: '#e74c3c', active: this.lightState === 'red', y: -70 },
+                    { color: '#f39c12', active: this.lightState === 'yellow', y: -45 },
+                    { color: '#2ecc71', active: this.lightState === 'green', y: -20 }
+                ];
+
+                lights.forEach(light => {
+                    this.ctx.fillStyle = light.active ? light.color : '#555';
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.lightX, this.lightY + light.y, 12, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    if (light.active) {
+                        this.ctx.shadowColor = light.color;
+                        this.ctx.shadowBlur = 20;
+                        this.ctx.fill();
+                        this.ctx.shadowBlur = 0;
+                    }
+                });
+
+                // Stop line
+                if (this.lightState === 'red' || this.lightState === 'yellow') {
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.fillRect(this.lightX - 2, 200, 4, 80);
+                }
+            }
+
+            private drawCars(): void {
+                this.cars.forEach(car => {
+                    // Car body
+                    this.ctx.fillStyle = car.color;
+                    this.ctx.fillRect(car.x, car.y, car.width, car.height);
+                    
+                    // Car shadow
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    this.ctx.fillRect(car.x + 2, car.y + car.height, car.width - 4, 3);
+
+                    // Windows
+                    this.ctx.fillStyle = 'rgba(100, 150, 200, 0.7)';
+                    this.ctx.fillRect(car.x + 10, car.y + 5, 15, 12);
+                    this.ctx.fillRect(car.x + 27, car.y + 5, 15, 12);
+
+                    // Wheels
+                    this.ctx.fillStyle = '#2c3e50';
+                    this.ctx.fillRect(car.x + 8, car.y + 25, 8, 8);
+                    this.ctx.fillRect(car.x + 34, car.y + 25, 8, 8);
+
+                    // Headlights
+                    if (car.speed > 0) {
+                        this.ctx.fillStyle = '#fff';
+                        this.ctx.fillRect(car.x + car.width - 2, car.y + 8, 3, 5);
+                        this.ctx.fillRect(car.x + car.width - 2, car.y + 17, 3, 5);
+                    }
+                });
+            }
+
+            private updateStats(): void {
+                document.getElementById('carCount')!.textContent = this.cars.length.toString();
+                
+                const avgSpeed = this.cars.length > 0
+                    ? this.cars.reduce((sum, car) => sum + car.speed, 0) / this.cars.length
+                    : 0;
+                document.getElementById('avgSpeed')!.textContent = avgSpeed.toFixed(1);
+                
+                document.getElementById('lightState')!.textContent = this.lightState.toUpperCase();
+            }
+
+            private animate(): void {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.drawRoad();
+                this.drawTrafficLight();
+                this.drawCars();
+                
+                this.updateTrafficLight();
+                this.updateCars();
+                this.updateStats();
+
+                this.animationId = requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // Initialize simulation when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                new TrafficSimulation('canvas');
+            });
+        } else {
+            new TrafficSimulation('canvas');
+        }
+    </script>
+</body>
+</html>
