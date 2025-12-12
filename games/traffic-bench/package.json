@@ -1,0 +1,25 @@
+{
+  "name": "traffic-bench",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest --passWithNoTests",
+    "test:run": "vitest run --passWithNoTests",
+    "deploy:worker": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply YOUR_DB_ID --remote",
+    "db:migrate:local": "wrangler d1 migrations apply YOUR_DB_ID --local"
+  },
+  "dependencies": {
+    "vue": "^3.5.24"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "vite": "^7.2.4",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.53.0"
+  }
+}

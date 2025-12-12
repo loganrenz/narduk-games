@@ -10,6 +10,7 @@ A monorepo containing all games by Narduk.
 - **[Stack & Balance](./games/stack-balance)** - A physics-based stacking game
 - **[PotPrefix](./games/potprefix)** - Gambling prefix word chains (potprefix.narduk.games)
 - **[TapWeave](./games/tapweave)** - Word insertion chain-builder (tapweave.narduk.games)
+- **[Traffic Bench](./games/traffic-bench)** - Benchmark viewer for `/outputs/` reports
 
 ## 🏗️ Monorepo Structure
 

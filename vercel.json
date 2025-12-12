@@ -95,6 +95,59 @@
         }
       ]
     },
+    {
+      "source": "/potprefix/(.*)",
+      "destination": "/games/potprefix/dist/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/potprefix",
+      "destination": "/games/potprefix/dist/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/tapweave/(.*)",
+      "destination": "/games/tapweave/dist/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/tapweave",
+      "destination": "/games/tapweave/dist/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/traffic-bench/(.*)",
+      "destination": "/games/traffic-bench/dist/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "games.nard.uk"
+        }
+      ]
+    },
+    {
+      "source": "/traffic-bench",
+      "destination": "/games/traffic-bench/dist/index.html",
       "has": [
         {
           "type": "host",
