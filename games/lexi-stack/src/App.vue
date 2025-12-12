@@ -524,14 +524,14 @@ function gameLoop(timestamp) {
 }
 
 function loadDictionary() {
-  return fetch('/dictionary.json')
+  return fetch(`${import.meta.env.BASE_URL}dictionary.json`)
     .then(r => r.json())
     .then(data => {
       const words = Object.keys(data).map(w => w.toUpperCase())
       dictionary = new Set(words)
     })
     .catch(() => {
-      return fetch('/words.txt')
+      return fetch(`${import.meta.env.BASE_URL}words.txt`)
         .then(r => r.text())
         .then(text => {
           const words = text.split(/\r?\n/).map(w => w.trim()).filter(Boolean)

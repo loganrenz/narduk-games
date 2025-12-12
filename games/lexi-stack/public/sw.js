@@ -1,20 +1,23 @@
 const CACHE_NAME = 'lexistack-v1';
+const BASE = self.registration.scope; // includes trailing slash, e.g. https://example.com/lexistack/
+const withBase = (path) => `${BASE}${path.replace(/^\//, '')}`;
+
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/logo.webp',
-  '/icon-192x192.png',
-  '/icon-512x512.png',
-  '/apple-touch-icon.png',
-  '/favicon-32x32.png',
-  '/favicon-16x16.png',
-  '/og-image.png',
-  '/og-image-facebook.png',
-  '/og-image-twitter.png',
-  '/og-image-square.png',
-  '/words.txt',
-  '/dictionary.json',
-  '/manifest.json'
+  BASE,
+  withBase('index.html'),
+  withBase('logo.webp'),
+  withBase('icon-192x192.png'),
+  withBase('icon-512x512.png'),
+  withBase('apple-touch-icon.png'),
+  withBase('favicon-32x32.png'),
+  withBase('favicon-16x16.png'),
+  withBase('og-image.png'),
+  withBase('og-image-facebook.png'),
+  withBase('og-image-twitter.png'),
+  withBase('og-image-square.png'),
+  withBase('words.txt'),
+  withBase('dictionary.json'),
+  withBase('manifest.json')
 ];
 
 // Install event - cache resources
@@ -61,7 +64,7 @@ self.addEventListener('fetch', (event) => {
       .catch(() => {
         // If both cache and network fail, return offline page if available
         if (event.request.destination === 'document') {
-          return caches.match('/index.html');
+          return caches.match(withBase('index.html'));
         }
       })
   );

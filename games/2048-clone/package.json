@@ -6,6 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "vitest run",
     "deploy:worker": "wrangler deploy",
     "db:migrate": "wrangler d1 migrations apply YOUR_DB_ID --remote",
     "db:migrate:local": "wrangler d1 migrations apply YOUR_DB_ID --local"
@@ -16,6 +17,7 @@
     "vue": "^3.5.25"
   },
   "devDependencies": {
+    "vitest": "^4.0.15",
     "wrangler": "^4.53.0"
   }
 }
