@@ -57,7 +57,14 @@
       </div>
     </div>
 
-    <div class="overlay" v-if="showTutorial">
+    <div class="overlay" v-if="!dictionaryLoaded">
+      <div class="modal">
+        <h2>Loading Dictionary...</h2>
+        <p>Please wait while we load the word dictionary.</p>
+      </div>
+    </div>
+
+    <div class="overlay" v-if="showTutorial && dictionaryLoaded">
       <div class="modal">
         <h2>How to Play</h2>
         <ul>
@@ -130,6 +137,7 @@ const floatingWordStyle = ref({ left: '0px', top: '0px' })
 const selectionWord = ref('')
 const floatingPoints = ref('')
 const toasts = ref([])
+const dictionaryLoaded = ref(false)
 
 let dictionary = new Set(fallbackWords)
 let grid = []
@@ -523,24 +531,25 @@ function gameLoop(timestamp) {
   animationFrameId = requestAnimationFrame(gameLoop)
 }
 
-function loadDictionary() {
-  return fetch('/dictionary.json')
-    .then(r => r.json())
-    .then(data => {
-      const words = Object.keys(data).map(w => w.toUpperCase())
+async function loadDictionary() {
+  try {
+    const response = await fetch('/dictionary.json')
+    const data = await response.json()
+    const words = Object.keys(data).map(w => w.toUpperCase())
+    dictionary = new Set(words)
+    dictionaryLoaded.value = true
+  } catch (error) {
+    try {
+      const response = await fetch('/words.txt')
+      const text = await response.text()
+      const words = text.split(/\r?\n/).map(w => w.trim().toUpperCase()).filter(Boolean)
       dictionary = new Set(words)
-    })
-    .catch(() => {
-      return fetch('/words.txt')
-        .then(r => r.text())
-        .then(text => {
-          const words = text.split(/\r?\n/).map(w => w.trim()).filter(Boolean)
-          dictionary = new Set(words)
-        })
-        .catch(() => {
-          dictionary = new Set(fallbackWords)
-        })
-    })
+      dictionaryLoaded.value = true
+    } catch (error2) {
+      dictionary = new Set(fallbackWords)
+      dictionaryLoaded.value = true
+    }
+  }
 }
 
 function startGame() {
@@ -595,7 +604,7 @@ function attachEvents() {
   
   gridRef.value.addEventListener('pointerdown', e => {
     const cell = e.target.closest('.cell')
-    if (!cell || !running || paused.value) return
+    if (!cell || !running || paused.value || !dictionaryLoaded.value) return
     const row = Number(cell.dataset.row)
     const col = Number(cell.dataset.col)
     if (!grid[row][col]) return
@@ -629,14 +638,14 @@ function attachEvents() {
   window.addEventListener('resize', drawPath)
 }
 
-onMounted(() => {
+onMounted(async () => {
+  attachEvents()
+  await loadDictionary()
   if (!localStorage.getItem('lexistack_tutorial_seen')) {
     showTutorial.value = true
   } else {
     startGame()
   }
-  attachEvents()
-  loadDictionary()
 })
 
 onUnmounted(() => {
